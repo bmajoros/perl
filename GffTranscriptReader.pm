@@ -29,6 +29,7 @@ use Gene;
 #   $transcriptArray=$reader->loadGFF($filename);
 #   $geneList=$reader->loadGenes($filename);
 #   $hashTable=$reader->hashBySubstrate($filename);
+#   $hashTable=$reader->hashGenesBySubstrate($filename);
 #   $hashTable=$reader->loadTranscriptIdHash($filename);
 #   $hashTable=$reader->loadGeneIdHash($filename);
 #   $reader->doNotSortTranscripts();
@@ -255,6 +256,22 @@ sub hashBySubstrate
 	my $transcript=$transcriptArray->[$i];
 	my $id=$transcript->getSubstrate();
 	push @{$hash->{$id}},$transcript;
+      }
+    return $hash;
+  }
+#--------------------------------------------------------------------------
+#   $hashTable=$reader->hashGenesBySubstrate($filename);
+sub hashGenesBySubstrate
+  {
+    my ($self,$filename)=@_;
+    my $geneArray=$self->loadGenes($filename);
+    my $n=@$geneArray;
+    my $hash={};
+    for(my $i=0 ; $i<$n ; ++$i)
+      {
+	my $gene=$geneArray->[$i];
+	my $id=$gene->getSubstrate();
+	push @{$hash->{$id}},$gene;
       }
     return $hash;
   }

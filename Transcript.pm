@@ -5,6 +5,7 @@ use Exon;
 use Translation;
 use CodonIterator;
 use CompiledFasta;
+use SpliceSite;
 use Carp;
 
 ######################################################################
@@ -83,6 +84,7 @@ use Carp;
 #   $genomicCoord=$transcript->mapToGenome($transcriptCoord);
 #   $transcriptCoord=$transcript->mapToTranscript($genomicCoord);
 #   $exon=$transcript->getExonContaining($genomicCoord);
+#   $array=$transcript->getSpliceSites();
 # Private methods:
 #   $transcript->adjustOrders();
 #   $transcript->sortExons();
@@ -897,6 +899,30 @@ sub setStrand
       $exon->setStrand($strand);
     }
   }
+#---------------------------------------------------------------------
+#   $array=$transcript->getSpliceSites();
+sub getSpliceSites
+{
+  my ($self)=@_;
+  my $sites=[];
+  my $strand=$self->{strand};
+  my $chr=$self->{substrate};
+  my $exons=$self->{exons};
+  my $numExons=@$exons;
+  for(my $i=0 ; $i<$numExons ; ++$i) {
+    my $exon=$exons->[$i];
+    my $begin=$exon->getBegin(); my $end=$exon->getEnd();
+    my ($type1,$type2);
+    if($strand eq "+") { $type1="acceptor"; $type2="donor" }
+    else { $type1="donor"; $type2="acceptor" }
+    my $site1=new SpliceSite($type1,$chr,$begin-2,$strand);
+    my $site2=new SpliceSite($type2,$chr,$end,$strand);
+    if($i>0) { push @$sites,$site1 }
+    if($i<$numExons-1) { push @$sites,$site2 }
+  }
+  return $sites;
+}
+#---------------------------------------------------------------------
 
 
 #---------------------------------------------------------------------
