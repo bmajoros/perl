@@ -12,9 +12,13 @@ use strict;
 #
 # Attributes:
 #   commands : array of string
+#   nice : empty, or integer (nice value)
+#   mem : empty, or integer (mem value, in megabytes)
 # Methods:
 #   $writer=new SlurmWriter();
 #   $writer->addCommand($cmd);
+#   $writer->nice(); # turns on "nice" (sets it to 100 by default)
+#   $writer->mem(1500);
 #   $writer->writeScripts($numScripts,$scriptDir,$filestem,
 #               "lowmem"|"himem",$baseDir,$additional_SBATCH_lines);
 ######################################################################
@@ -47,6 +51,10 @@ sub writeScripts {
   if(length($moreSBATCH)>0) {
     unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" }
   }
+  if($this->{niceValue}>0) 
+    { $moreSBATCH.="#SBATCH --nice="+$this->{niceValue}+"\n" }
+  if($this->{memValue}>0) 
+    { $moreSBATCH.="#SBATCH --mem "+$this->{memValue}+"\n" }
   if(-e $scriptDir) { system("rm -f $scriptDir/*.{slurm,output}") }
   system("mkdir -p $scriptDir");
   my $commands=$this->{commands};
@@ -77,6 +85,18 @@ cd $baseDir
   }
 }
 #---------------------------------------------------------------------
+#   $writer->nice();
+sub nice {
+  my ($this,$value)=@_;
+  if(!$value) { $value=100 }
+  $this->{niceValue}=$value;
+}
+#---------------------------------------------------------------------
+#   $writer->mem(1500);
+sub mem {
+  my ($this,$value)=@_;
+  $this->{memValue}=$value;
+}
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
