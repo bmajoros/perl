@@ -48,21 +48,22 @@ sub writeScripts {
   my ($this,$numScripts,$scriptDir,$filestem,$himem,$baseDir,$moreSBATCH)
     =@_;
   chomp $moreSBATCH;
+  if($this->{niceValue}>0) 
+    { $moreSBATCH.="#SBATCH --nice=".$this->{niceValue}."\n" }
+  if($this->{memValue}>0) 
+    { $moreSBATCH.="#SBATCH --mem=".$this->{memValue}."\n" }
   if(length($moreSBATCH)>0) {
     unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" }
   }
-  if($this->{niceValue}>0) 
-    { $moreSBATCH.="#SBATCH --nice="+$this->{niceValue}+"\n" }
-  if($this->{memValue}>0) 
-    { $moreSBATCH.="#SBATCH --mem "+$this->{memValue}+"\n" }
   if(-e $scriptDir) { system("rm -f $scriptDir/*.{slurm,output}") }
   system("mkdir -p $scriptDir");
   my $commands=$this->{commands};
   my $numCommands=@$commands;
-  my $commandsPerJob=int($numCommands/$numScripts);
+  #my $commandsPerJob=int($numCommands/$numScripts);
+  my $commandsPerJob=$numCommands/$numScripts;
   for(my $i=0 ; $i<$numScripts ; ++$i) {
-    my $begin=$i*$commandsPerJob;
-    my $end=($i+1)*$commandsPerJob;
+    my $begin=int($i*$commandsPerJob);
+    my $end=int(($i+1)*$commandsPerJob);
     if($i==$numScripts-1) { $end=$numCommands }
     my $id=$i+1;
     my $filename="$scriptDir/$filestem$id.slurm";
