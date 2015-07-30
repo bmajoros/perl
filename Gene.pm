@@ -13,6 +13,7 @@ use strict;
 #   $gene->addTranscript($t);
 #   $n=$gene->getNumTranscripts();
 #   $t=$gene->getIthTranscript($i);
+#   $t=$gene->longestTranscript();
 #   $id=$gene->getId();
 #   $gene->setId($id);
 #   $begin=$gene->getBegin(); # leftmost edge
@@ -104,12 +105,29 @@ sub getNumTranscripts
   }
 #---------------------------------------------------------------------
 #   $t=$gene->getIthTranscript($i);
-sub getIthTranscript
-  {
-    my ($self,$i)=@_;
-    my $transcripts=$self->{transcripts};
-    return $transcripts->[$i];
+sub getIthTranscript {
+  my ($self,$i)=@_;
+  my $transcripts=$self->{transcripts};
+  return $transcripts->[$i];
+}
+#---------------------------------------------------------------------
+#   $t=$gene->longestTranscript();
+sub longestTranscript {
+  my ($self)=@_;
+  my $transcripts=$self->{transcripts};
+  my $n=@$transcripts;
+  my $longest=$transcripts->[0];
+  my $longestLength=$longest->getExtent();
+  for(my $i=1 ; $i<$n ; ++$i) {
+    my $transcript=$transcripts->[$i];
+    my $length=$transcript->getExtent();
+    if($length>$longestLength) {
+      $longest=$transcript;
+      $longestLength=$length;
+    }
   }
+  return $longest;
+}
 #---------------------------------------------------------------------
 #   $id=$gene->getId();
 sub getId
