@@ -20,6 +20,7 @@ use strict;
 #   $end=$gene->getEnd();     # rightmost edge
 #   $strand=$gene->getStrand();
 #   $substrate=$gene->getSubstrate();
+#   $gff=$gene->toGff();
 #   
 ######################################################################
 
@@ -165,6 +166,18 @@ sub getBeginAndEnd
     return ($begin,$end);
   }
 #---------------------------------------------------------------------
+#   $gff=$gene->toGff();
+sub toGff {
+  my ($self)=@_;
+  my $transcripts=$self->{transcripts};
+  my $n=@$transcripts;
+  my $gff;
+  for(my $i=0 ; $i<$n ; ++$i) {
+    my $transcript=$transcripts->[$i];
+    $gff.=$transcript->toGff();
+  }
+  return $gff;
+}
 #---------------------------------------------------------------------
 
 

@@ -370,16 +370,12 @@ sub adjustOrders
     return unless $numExons>0;
     for(my $i=0 ; $i<$numExons ; ++$i)
       {$exons->[$i]->{order}=$i}
-    if($self->{strand} eq "+")
-      {
-	$self->{begin}=$exons->[0]->{begin};
-	$self->{end}=$exons->[$numExons-1]->{end};
-      }
-    else
-      {
-	$self->{begin}=$exons->[$numExons-1]->{begin};
-	$self->{end}=$exons->[0]->{end};
-      }
+    #if($self->{strand} eq "+") {
+    #  $self->{begin}=$exons->[0]->{begin};
+    #  $self->{end}=$exons->[$numExons-1]->{end};}
+    #else {
+    #  $self->{begin}=$exons->[$numExons-1]->{begin};
+    #  $self->{end}=$exons->[0]->{end};}
   }
 #---------------------------------------------------------------------
 #   $bool=$transcript->areExonTypesSet();
@@ -500,12 +496,20 @@ sub toGff
     my $exons=$self->{exons};
     my $numExons=@$exons;
     my $gff;
-    for(my $i=0 ; $i<$numExons ; ++$i)
-      {
-	my $exon=$exons->[$i];
-	my $exonGff=$exon->toGff();
-	$gff.=$exonGff;
-      }
+    my $begin=$self->{begin}; my $end=$self->{end};
+    if(defined($begin)) {
+      my $substrate=$self->{substrate};
+      my $source=$self->{source};
+      my $strand=$self->{strand};
+      my $transID=$self->{transcriptId};
+      my $geneID=$self->{geneId};
+      $gff.="$substrate\t$source\tgene\t$begin\t$end\t.\t$strand\t.\ttranscript_id=$transID;gene_id=$geneID;\n";
+    }
+    for(my $i=0 ; $i<$numExons ; ++$i) {
+      my $exon=$exons->[$i];
+      my $exonGff=$exon->toGff();
+      $gff.=$exonGff;
+    }
     return $gff;
   }
 #---------------------------------------------------------------------

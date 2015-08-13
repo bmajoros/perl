@@ -79,14 +79,23 @@ sub loadGFF
     my (%transcripts,%genes,$geneId);
     my $readOrder=1;
     if($gffFilename=~/\.gz$/)
-      {open(GFF,"cat $gffFilename|gunzip|") || die $gffFilename}
+      {open(GFF,"cat $gffFilename|gunzip|") || die "can't gunzip $gffFilename"}
     else
-      {open(GFF,$gffFilename) || die $gffFilename}
+      {open(GFF,$gffFilename) || die "can't open $gffFilename"}
+    my %transcriptBeginEnd;
     while(<GFF>)
       {
 	next unless $_=~/\S+/;
 	next if $_=~/^\s*\#/;
 	my @fields=split/\s+/,$_;
+	if($fields[2] eq "gene") {
+	  my $begin=$fields[3]-1;
+	  my $end=$fields[4];
+	  if($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/) {
+	    my $transcriptId=$1;
+	    $transcriptBeginEnd{$transcriptId}=[$begin,$end];
+	  }
+	}
 	if($fields[2]=~/exon/ || $fields[2]=~/CDS/)
 	  {
 	    my $exonBegin=$fields[3]-1;
@@ -121,6 +130,11 @@ sub loadGFF
 		#if($transcript->{substrate}=~/([^\.]+)\./)
 		#  {$transcript->{substrate}=$1}
 		$transcript->{source}=$fields[1];
+		if(defined($transcriptBeginEnd{$transcriptId})) {
+		  my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
+		  $transcript->setBegin($begin);
+		  $transcript->setEnd($end);
+		}
 	      }
 	    $transcript->{geneId}=$geneId;
 	    $transcript->{extraFields}=$extra;
@@ -179,6 +193,11 @@ sub loadGFF
 		$transcript->{readOrder}=$readOrder++;
 		$transcript->{substrate}=$fields[0];
 		$transcript->{source}=$fields[1];
+		if(defined($transcriptBeginEnd{$transcriptId})) {
+		  my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
+		  $transcript->setBegin($begin);
+		  $transcript->setEnd($end);
+		}
 	      }
 	    $transcript->{geneId}=$geneId;
 	    $transcript->{startCodon}=$startCodonBegin;
@@ -323,8 +342,8 @@ sub adjustStartCodons
 	    $transcript->{exons}=\@exons;
 	    my $numExons=@exons;
 	    next unless $numExons>0;
-	    $transcript->{begin}=$exons[0]->{begin};
-	    $transcript->{end}=$exons[$numExons-1]->{end};
+	    if(!defined($transcript->{begin})) { $transcript->{begin}=$exons[0]->{begin} }
+	    if(!defined($transcript->{end})) { $transcript->{end}=$exons[$numExons-1]->{end} }
 	    if(defined($transcript->{startCodon}))
 	      {
 		$startCodon=$transcript->{startCodon}-$transcript->{begin};
@@ -361,8 +380,8 @@ sub adjustStartCodons
             $transcript->{exons}=\@exons;
             my $numExons=@exons;
 	    next unless $numExons>0;
-            $transcript->{end}=$exons[0]->{end};
-            $transcript->{begin}=$exons[$numExons-1]->{begin};
+            if(!defined($transcript->{end})) { $transcript->{end}=$exons[0]->{end} }
+            if(!defined($transcript->{begin})) { $transcript->{begin}=$exons[$numExons-1]->{begin} }
 
 	    if(defined $transcript->{startCodon})
 	      {$startCodon=$transcript->{end}-$transcript->{startCodon}}
