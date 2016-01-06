@@ -498,6 +498,7 @@ sub toGff
     my $gff;
     my $begin=$self->{begin}; my $end=$self->{end};
     if(defined($begin)) {
+      $begin+=1; # convert to 1-based coordinates
       my $substrate=$self->{substrate};
       my $source=$self->{source};
       my $strand=$self->{strand};

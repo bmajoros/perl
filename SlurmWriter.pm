@@ -20,7 +20,7 @@ use strict;
 #   $writer->nice(); # turns on "nice" (sets it to 100 by default)
 #   $writer->mem(1500);
 #   $writer->writeScripts($numScripts,$scriptDir,$filestem,
-#               "lowmem"|"himem",$baseDir,$additional_SBATCH_lines);
+#               $baseDir,$additional_SBATCH_lines);
 ######################################################################
 
 
@@ -43,9 +43,9 @@ sub addCommand
 }
 #---------------------------------------------------------------------
 #   $writer->writeScripts($numScripts,$scriptDir,$filestem,
-#               "lowmem"|"himem",$baseDir,$additional_SBATCH_lines);
+#               $baseDir,$additional_SBATCH_lines);
 sub writeScripts {
-  my ($this,$numScripts,$scriptDir,$filestem,$himem,$baseDir,$moreSBATCH)
+  my ($this,$numScripts,$scriptDir,$filestem,$baseDir,$moreSBATCH)
     =@_;
   chomp $moreSBATCH;
   if($this->{niceValue}>0) 
@@ -70,7 +70,6 @@ sub writeScripts {
     open(OUT,">$filename") || die $filename;
     print OUT "#!/bin/bash
 #
-#SBATCH -p $himem
 #SBATCH -J $filestem$id
 #SBATCH -o $filestem$id.output
 #SBATCH -e $filestem$id.output

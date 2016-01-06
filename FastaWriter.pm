@@ -17,6 +17,7 @@ use FileHandle;
 # Methods:
 #   $w=new FastaWriter($optionalWidth);
 #   $w->writeFasta($defline,$sequence,$filename);
+#   $w->appendToFasta($defline,$sequence,$filename);
 #   $w->writeFastaFromRef($defline,\$sequence,$filename);
 #   $w->addToFasta($defline,$sequence,$filehandle);
 #
@@ -46,6 +47,17 @@ sub writeFasta
   {
       my ($self,$defline,$sequence,$filename)=@_;
       my $h=new FileHandle(">$filename") || die "Can't create $filename";
+      $self->addToFasta($defline,$sequence,$h);
+      close($h);
+  }
+#---------------------------------------------------------------------
+#   $w->appendToFasta($defline,$sequence,$filename);
+sub appendToFasta
+  {
+      my ($self,$defline,$sequence,$filename)=@_;
+      if(!-e $filename) 
+	{ $self->writeFasta($defline,$sequence,$filename); return; }
+      my $h=new FileHandle(">>$filename") || die "Can't create $filename";
       $self->addToFasta($defline,$sequence,$h);
       close($h);
   }
