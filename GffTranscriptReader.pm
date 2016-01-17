@@ -88,7 +88,7 @@ sub loadGFF
 	next unless $_=~/\S+/;
 	next if $_=~/^\s*\#/;
 	my @fields=split/\s+/,$_;
-	if($fields[2] eq "gene") {
+	if($fields[2] eq "gene" || $fields[2] eq "transcript") {
 	  my $begin=$fields[3]-1;
 	  my $end=$fields[4];
 	  if($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/) {
@@ -96,113 +96,155 @@ sub loadGFF
 	    $transcriptBeginEnd{$transcriptId}=[$begin,$end];
 	  }
 	}
-	if($fields[2]=~/exon/ || $fields[2]=~/CDS/)
-	  {
-	    my $exonBegin=$fields[3]-1;
-	    my $exonEnd=$fields[4];
-	    my $exonScore=$fields[5];
-	    my $strand=$fields[6];
-	    my $frame=$fields[7];
-	    my $transcriptId;#=$fields[8];
-	    if($_=~/transgrp[:=]\s*(\S+)/) {$transcriptId=$1}
-	    elsif($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/) 
-	      {$transcriptId=$1}
-	    elsif($_=~/Parent=([^;,\s]+)/) {$transcriptId=$1}
-	    my $geneId;#=$fields[8];
-	    if(/genegrp=(\S+)/) {$geneId=$1}
-	    elsif(/gene_id[:=]?\s*\"?([^\s\;"]+)\"?/) {$geneId=$1}
-	    if(!defined($transcriptId)) {$transcriptId=$geneId}
-	    if(!defined($geneId)) {$geneId=$transcriptId}
-	    chop $transcriptId if $transcriptId=~/;$/;
-	    chop $geneId if $geneId=~/;$/;
-	    my $extra;
-	    for(my $i=8;$i<@fields;++$i){$extra.=$fields[$i]." "}
-	    if($exonBegin>$exonEnd)
-	      {($exonBegin,$exonEnd)=($exonEnd,$exonBegin)}
-	    my $transcript=$transcripts{$transcriptId};
-	    if(!defined $transcript)
-	      {
-		$transcripts{$transcriptId}=$transcript=
-		  new Transcript($transcriptId,$strand);
-		$transcript->setStopCodons($self->{stopCodons});
-		$transcript->{readOrder}=$readOrder++;
-		$transcript->{substrate}=$fields[0];
-		#if($transcript->{substrate}=~/([^\.]+)\./)
-		#  {$transcript->{substrate}=$1}
-		$transcript->{source}=$fields[1];
-		if(defined($transcriptBeginEnd{$transcriptId})) {
-		  my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
-		  $transcript->setBegin($begin);
-		  $transcript->setEnd($end);
-		}
-	      }
-	    $transcript->{geneId}=$geneId;
-	    $transcript->{extraFields}=$extra;
-	    my $gene=$genes{$geneId};
-	    if(!defined $gene) 
-	      {$genes{$geneId}=$gene=new Gene(); $gene->setId($geneId)}
-	    $transcript->setGene($gene);
-	    my $exon=new Exon($exonBegin,$exonEnd,$transcript);
-	    if(!$transcript->exonOverlapsExon($exon))
-	      {
-		$exon->{frame}=$frame;
-		$exon->{score}=$exonScore;
-		$exon->{type}=$fields[2];
-		
-		push @{$transcript->{exons}},$exon; # OK -- we sort later
-		#$transcript->addExon($exon);       # <---too slow
-	      }
-	    if($transcript->numExons()==1) # first exon seen...
-	      {$gene->addTranscript($transcript)}
+	elsif($fields[2]=~/UTR/ || $fields[2]=~/utr/) {
+	  my $exonBegin=$fields[3]-1;
+	  my $exonEnd=$fields[4];
+	  my $exonScore=$fields[5];
+	  my $strand=$fields[6];
+	  my $frame=$fields[7];
+	  my $transcriptId;
+	  if($_=~/transgrp[:=]\s*(\S+)/) {$transcriptId=$1}
+	  elsif($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/){$transcriptId=$1}
+	  elsif($_=~/Parent=([^;,\s]+)/) {$transcriptId=$1}
+	  my $geneId;
+	  if(/genegrp=(\S+)/) {$geneId=$1}
+	  elsif(/gene_id[:=]?\s*\"?([^\s\;"]+)\"?/) {$geneId=$1}
+	  if(!defined($transcriptId)) {$transcriptId=$geneId}
+	  if(!defined($geneId)) {$geneId=$transcriptId}
+	  chop $transcriptId if $transcriptId=~/;$/;
+	  chop $geneId if $geneId=~/;$/;
+	  my $extra;
+	  for(my $i=8;$i<@fields;++$i){$extra.=$fields[$i]." "}
+	  if($exonBegin>$exonEnd)
+	    {($exonBegin,$exonEnd)=($exonEnd,$exonBegin)}
+	  my $transcript=$transcripts{$transcriptId};
+	  if(!defined $transcript) {
+	    $transcripts{$transcriptId}=$transcript=
+	      new Transcript($transcriptId,$strand);
+	    $transcript->setStopCodons($self->{stopCodons});
+	    $transcript->{readOrder}=$readOrder++;
+	    $transcript->{substrate}=$fields[0];
+	    $transcript->{source}=$fields[1];
+	    if(defined($transcriptBeginEnd{$transcriptId})) {
+	      my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
+	      $transcript->setBegin($begin);
+	      $transcript->setEnd($end);
+	    }
 	  }
+	  $transcript->{geneId}=$geneId;
+	  $transcript->{extraFields}=$extra;
+	  my $gene=$genes{$geneId};
+	  if(!defined $gene)
+	    {$genes{$geneId}=$gene=new Gene(); $gene->setId($geneId)}
+	  $transcript->setGene($gene);
+	  my $exon=new Exon($exonBegin,$exonEnd,$transcript);
+	  if(!$transcript->exonOverlapsExon($exon)) {
+	    $exon->{frame}=$frame;
+	    $exon->{score}=$exonScore;
+	    $exon->{type}=$fields[2];
+	    push @{$transcript->{UTR}},$exon; # OK -- we sort later
+	  }
+	  if($transcript->numExons()+$transcript->numUTR())
+	    {$gene->addTranscript($transcript)}
+	}
+	elsif($fields[2]=~/exon/ || $fields[2]=~/CDS/) {
+	  my $exonBegin=$fields[3]-1;
+	  my $exonEnd=$fields[4];
+	  my $exonScore=$fields[5];
+	  my $strand=$fields[6];
+	  my $frame=$fields[7];
+	  my $transcriptId;
+	  if($_=~/transgrp[:=]\s*(\S+)/) {$transcriptId=$1}
+	  elsif($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/)
+	    {$transcriptId=$1}
+	  elsif($_=~/Parent=([^;,\s]+)/) {$transcriptId=$1}
+	  my $geneId;
+	  if(/genegrp=(\S+)/) {$geneId=$1}
+	  elsif(/gene_id[:=]?\s*\"?([^\s\;"]+)\"?/) {$geneId=$1}
+	  if(!defined($transcriptId)) {$transcriptId=$geneId}
+	  if(!defined($geneId)) {$geneId=$transcriptId}
+	  chop $transcriptId if $transcriptId=~/;$/;
+	  chop $geneId if $geneId=~/;$/;
+	  my $extra;
+	  for(my $i=8;$i<@fields;++$i){$extra.=$fields[$i]." "}
+	  if($exonBegin>$exonEnd)
+	    {($exonBegin,$exonEnd)=($exonEnd,$exonBegin)}
+	  my $transcript=$transcripts{$transcriptId};
+	  if(!defined $transcript) {
+	    $transcripts{$transcriptId}=$transcript=
+	      new Transcript($transcriptId,$strand);
+	    $transcript->setStopCodons($self->{stopCodons});
+	    $transcript->{readOrder}=$readOrder++;
+	    $transcript->{substrate}=$fields[0];
+	    $transcript->{source}=$fields[1];
+	    if(defined($transcriptBeginEnd{$transcriptId})) {
+	      my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
+	      $transcript->setBegin($begin);
+	      $transcript->setEnd($end);
+	    }
+	  }
+	  $transcript->{geneId}=$geneId;
+	  $transcript->{extraFields}=$extra;
+	  my $gene=$genes{$geneId};
+	  if(!defined $gene) 
+	    {$genes{$geneId}=$gene=new Gene(); $gene->setId($geneId)}
+	  $transcript->setGene($gene);
+	  my $exon=new Exon($exonBegin,$exonEnd,$transcript);
+	  if(!$transcript->exonOverlapsExon($exon)) {
+	    $exon->{frame}=$frame;
+	    $exon->{score}=$exonScore;
+	    $exon->{type}=$fields[2];
+	    push @{$transcript->{exons}},$exon; # OK -- we sort later
+	    #$transcript->addExon($exon);       # <---too slow
+	  }
+	  if($transcript->numExons()+$transcript->numUTR()==1)
+	    {$gene->addTranscript($transcript)}
+	}
 	elsif($_=~/translation\s+(\d+)\s+(\d+).*([\-\+]).*transgrp=(\S+)/ ||
-	      $_=~/translation\s+(\d+)\s+(\d+).*([\-\+]).*transcript_id:\s*\"?([^\s\"]+)\"?/)
-	  {
-	    my ($startCodon,$stopCodon,$strand,$transcriptId)=
-	      ($1-1,$2,$3,$4,);
-	    $_=~/genegrp=(\S+)|gene_id:?\s*\"[\s\"]+\"/ || die $_;
-	    my $geneId=$1;
-	    my $transcript=$transcripts{$transcriptId};
-	    if($strand eq "-") {$startCodon=$stopCodon}
-	    $transcript->{startCodon}=$startCodon;
-	    $transcript->{startCodonAbsolute}=$startCodon;
-	    $transcript->{geneId}=$geneId;
+	      $_=~/translation\s+(\d+)\s+(\d+).*([\-\+]).*transcript_id:\s*\"?([^\s\"]+)\"?/) {
+	  my ($startCodon,$stopCodon,$strand,$transcriptId)=
+	    ($1-1,$2,$3,$4,);
+	  $_=~/genegrp=(\S+)|gene_id:?\s*\"[\s\"]+\"/ || die $_;
+	  my $geneId=$1;
+	  my $transcript=$transcripts{$transcriptId};
+	  if($strand eq "-") {$startCodon=$stopCodon}
+	  $transcript->{startCodon}=$startCodon;
+	  $transcript->{startCodonAbsolute}=$startCodon;
+	  $transcript->{geneId}=$geneId;
+	}
+	elsif($fields[2]=~/start-codon/) {
+	  my $startCodonBegin=$fields[3]-1;
+	  my $startCodonEnd=$fields[4];
+	  my $strand=$fields[6];
+	  my $transcriptId=$fields[8];
+	  if($_=~/transgrp=(\S+)/) {$transcriptId=$1}
+	  elsif($_=~/transcript_id:\s*\"?([^\s\"]+)\"?/) 
+	    {$transcriptId=$1}
+	  my $geneId=$fields[8];
+	  if(/genegrp=(\S+)/) {$geneId=$1}
+	  elsif(/gene_id:?\s*\"?([^\s\"]+)\"?/) {$geneId=$1}
+	  if($startCodonEnd ne "." &&
+	     $startCodonBegin>$startCodonEnd)
+	    {($startCodonBegin,$startCodonEnd)=
+	       ($startCodonEnd,$startCodonBegin)}
+	  my $transcript=$transcripts{$transcriptId};
+	  if(!defined $transcript) {
+	    $transcripts{$transcriptId}=$transcript=
+	      new Transcript($transcriptId,$strand);
+	    $transcript->setStopCodons($self->{stopCodons});
+	    $transcript->{readOrder}=$readOrder++;
+	    $transcript->{substrate}=$fields[0];
+	    $transcript->{source}=$fields[1];
+	    if(defined($transcriptBeginEnd{$transcriptId})) {
+	      my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
+	      $transcript->setBegin($begin);
+	      $transcript->setEnd($end);
+	    }
 	  }
-	elsif($fields[2]=~/start-codon/)
-	  {
-	    my $startCodonBegin=$fields[3]-1;
-	    my $startCodonEnd=$fields[4];
-	    my $strand=$fields[6];
-	    my $transcriptId=$fields[8];
-	    if($_=~/transgrp=(\S+)/) {$transcriptId=$1}
-	    elsif($_=~/transcript_id:\s*\"?([^\s\"]+)\"?/) 
-	      {$transcriptId=$1}
-	    my $geneId=$fields[8];
-	    if(/genegrp=(\S+)/) {$geneId=$1}
-	    elsif(/gene_id:?\s*\"?([^\s\"]+)\"?/) {$geneId=$1}
-	    if($startCodonEnd ne "." &&
-	       $startCodonBegin>$startCodonEnd)
-	      {($startCodonBegin,$startCodonEnd)=
-		 ($startCodonEnd,$startCodonBegin)}
-	    my $transcript=$transcripts{$transcriptId};
-	    if(!defined $transcript)
-	      {
-		$transcripts{$transcriptId}=$transcript=
-		  new Transcript($transcriptId,$strand);
-		$transcript->setStopCodons($self->{stopCodons});
-		$transcript->{readOrder}=$readOrder++;
-		$transcript->{substrate}=$fields[0];
-		$transcript->{source}=$fields[1];
-		if(defined($transcriptBeginEnd{$transcriptId})) {
-		  my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
-		  $transcript->setBegin($begin);
-		  $transcript->setEnd($end);
-		}
-	      }
-	    $transcript->{geneId}=$geneId;
-	    $transcript->{startCodon}=$startCodonBegin;
-	    $transcript->{startCodonAbsolute}=$startCodonBegin;
-	  }
+	  $transcript->{geneId}=$geneId;
+	  $transcript->{startCodon}=$startCodonBegin;
+	  $transcript->{startCodonAbsolute}=$startCodonBegin;
+	}
       }
     close(GFF);
     my $transcripts=[];
@@ -210,15 +252,14 @@ sub loadGFF
     adjustStartCodons($transcripts);
     computeFrames($transcripts);
     undef %transcripts;
-    if($self->{shouldSortTranscripts})
-      {
-	@$transcripts=sort
-	  {
-	    my $cmp=0+($a->{substrate} cmp $b->{substrate});
-	    if($cmp==0) {$cmp=($a->{begin}<=>$b->{begin})}
-	    $cmp;
-	  } @$transcripts;
-      }
+    if($self->{shouldSortTranscripts}) {
+      @$transcripts=sort
+	{
+	  my $cmp=0+($a->{substrate} cmp $b->{substrate});
+	  if($cmp==0) {$cmp=($a->{begin}<=>$b->{begin})}
+	  $cmp;
+	} @$transcripts;
+    }
     else 
       {@$transcripts=sort {$a->{readOrder}<=>$b->{readOrder}} @$transcripts}
     return $transcripts;
@@ -328,91 +369,81 @@ sub computeFrames
 sub adjustStartCodons
 {
     my ($transcripts)=@_;
-    foreach my $transcript (@$transcripts)
-    {
+    foreach my $transcript (@$transcripts) {
       $transcript->sortExons();
       $transcript->adjustOrders();
-	my $strand=$transcript->{strand};
-	my $startCodon;
-	my $totalIntronSize=0;
-	if($strand eq "+")
-	{
-	    my @exons=
-		sort {$a->{begin} <=> $b->{begin}} @{$transcript->{exons}};
-	    $transcript->{exons}=\@exons;
-	    my $numExons=@exons;
-	    next unless $numExons>0;
-	    if(!defined($transcript->{begin})) { $transcript->{begin}=$exons[0]->{begin} }
-	    if(!defined($transcript->{end})) { $transcript->{end}=$exons[$numExons-1]->{end} }
-	    if(defined($transcript->{startCodon}))
-	      {
-		$startCodon=$transcript->{startCodon}-$transcript->{begin};
-	      }
-	    else
-	      {
-		$startCodon=0;
-		$transcript->{startCodon}=$transcript->{begin};
-		$transcript->{startCodonAbsolute}=$transcript->{begin};
-	      }
-	    for(my $i=0 ; $i<$numExons ; ++$i)
-	      {
-		my $exon=$exons[$i];
-		$exon->{order}=$i;
-	      }
-	    for(my $i=0 ; $i<$numExons ; ++$i)
-	    {
-		my $exon=$exons[$i];
-		if($i>0)
-		{
-		    my $prevExon=$exons[$i-1];
-		    my $intronSize=$exon->{begin}-$prevExon->{end};
-		    $totalIntronSize+=$intronSize;
-		}
-		if(defined($transcript->{startCodon}) && 
-		   exonContainsPoint($exon,$transcript->{startCodon})) 
-		  {last}
-	    }
+      my $strand=$transcript->{strand};
+      my $startCodon;
+      my $totalIntronSize=0;
+      if($strand eq "+"){
+	my @exons=
+	  sort {$a->{begin} <=> $b->{begin}} @{$transcript->{exons}};
+	$transcript->{exons}=\@exons;
+	my $numExons=@exons;
+	next unless $numExons>0;
+	if(!defined($transcript->{begin})) 
+	  { $transcript->{begin}=$exons[0]->{begin} }
+	if(!defined($transcript->{end})) 
+	  { $transcript->{end}=$exons[$numExons-1]->{end} }
+	if(defined($transcript->{startCodon}))  {
+	  $startCodon=$transcript->{startCodon}-$transcript->{begin};
 	}
-	else # $strand eq "-"
-	{
-            my @exons=
-                sort {$b->{begin} <=> $a->{begin}} @{$transcript->{exons}};
-            $transcript->{exons}=\@exons;
-            my $numExons=@exons;
-	    next unless $numExons>0;
-            if(!defined($transcript->{end})) { $transcript->{end}=$exons[0]->{end} }
-            if(!defined($transcript->{begin})) { $transcript->{begin}=$exons[$numExons-1]->{begin} }
-
-	    if(defined $transcript->{startCodon})
-	      {$startCodon=$transcript->{end}-$transcript->{startCodon}}
-	    else
-	      {
-		$startCodon=0;
-		$transcript->{startCodon}=$transcript->{end};###
-		$transcript->{startCodonAbsolute}=$transcript->{end};###
-	      }
-            for(my $i=0 ; $i<$numExons ; ++$i)
-            {
-                my $exon=$exons[$i];
-		$exon->{order}=$i;
-                if($i>0)
-                {
-                    my $prevExon=$exons[$i-1];
-                    my $intronSize=$prevExon->{begin}-$exon->{end};
-                    $totalIntronSize+=$intronSize;
-                }
-                if(defined($transcript->{startCodon}) &&
-		   exonContainsPoint($exon,$transcript->{startCodon})) 
-		  {last}
-            }
+	else  {
+	  $startCodon=0;
+	  $transcript->{startCodon}=$transcript->{begin};
+	  $transcript->{startCodonAbsolute}=$transcript->{begin};
 	}
-	if(defined($startCodon))
-	  {
-	    $startCodon-=$totalIntronSize;
-	    $transcript->{startCodon}=$startCodon;
+	for(my $i=0 ; $i<$numExons ; ++$i) {
+	  my $exon=$exons[$i];
+	  $exon->{order}=$i;
+	}
+	for(my $i=0 ; $i<$numExons ; ++$i) {
+	  my $exon=$exons[$i];
+	  if($i>0) {
+	    my $prevExon=$exons[$i-1];
+	    my $intronSize=$exon->{begin}-$prevExon->{end};
+	    $totalIntronSize+=$intronSize;
 	  }
+	  if(defined($transcript->{startCodon}) && 
+	     exonContainsPoint($exon,$transcript->{startCodon})) 
+	    {last}
+	}
+      }
+      else { # $strand eq "-"
+	my @exons=
+	  sort {$b->{begin} <=> $a->{begin}} @{$transcript->{exons}};
+	$transcript->{exons}=\@exons;
+	my $numExons=@exons;
+	next unless $numExons>0;
+	if(!defined($transcript->{end})) { $transcript->{end}=$exons[0]->{end} }
+	if(!defined($transcript->{begin})) { $transcript->{begin}=$exons[$numExons-1]->{begin} }
+	
+	if(defined $transcript->{startCodon})
+	  {$startCodon=$transcript->{end}-$transcript->{startCodon}}
+	else {
+	  $startCodon=0;
+	  $transcript->{startCodon}=$transcript->{end};###
+	  $transcript->{startCodonAbsolute}=$transcript->{end};###
+	}
+	for(my $i=0 ; $i<$numExons ; ++$i) {
+	  my $exon=$exons[$i];
+	  $exon->{order}=$i;
+	  if($i>0) {
+	    my $prevExon=$exons[$i-1];
+	    my $intronSize=$prevExon->{begin}-$exon->{end};
+	    $totalIntronSize+=$intronSize;
+	  }
+	  if(defined($transcript->{startCodon}) &&
+	     exonContainsPoint($exon,$transcript->{startCodon})) 
+	    {last}
+	}
+      }
+      if(defined($startCodon)){
+	$startCodon-=$totalIntronSize;
+	$transcript->{startCodon}=$startCodon;
+      }
     }
-}
+  }
 #--------------------------------------------------------------------------
 sub exonContainsPoint
 {

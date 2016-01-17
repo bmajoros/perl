@@ -24,6 +24,7 @@ use Carp;
 #                        relative to genomic axis
 #   strand : + or -
 #   exons : pointer to array of Exons
+#   UTR : pointer to array of UTR segments
 #   begin : begin coordinate of leftmost exon (zero based)
 #   end : end coordinate of rightmost exon (one past end)
 #   sequence : NOT LOADED BY DEFAULT!
@@ -31,8 +32,10 @@ use Carp;
 #   stopCodons : hash table of stop codons (strings)
 #   geneId : identifier of gene to which this transcript belongs
 #   gene : a Gene object to which this transcript belongs
+#   extraFields : a string of extra fields from the end of the GFF line
 # Methods:
 #   $transcript=new Transcript($id,$strand);
+#   $rawExons=$transcript->getRawExons(); # includes UTR (possibly coalesced)
 #   $transcript->addExon($exon);
 #   $copy=$transcript->copy();
 #   $bool=$transcript->areExonTypesSet();
@@ -51,6 +54,7 @@ use Carp;
 #   $len=$transcript->getLength(); # sum of exon sizes
 #   $len=$transcript->getExtent(); # end-begin
 #   $n=$transcript->numExons();
+#   $n=$transcript->numUTR();
 #   $exon=$transcript->getIthExon($i);
 #   $transcript->deleteExon($index);
 #   $transcript->deleteExonRef($exon);
@@ -103,6 +107,7 @@ sub new
      transcriptId=>$id,
      strand=>$strand,
      exons=>[],
+     UTR=>[],
      stopCodons=>{TAG=>1,TGA=>1,TAA=>1},
     };
   bless $self,$class;
@@ -354,10 +359,16 @@ sub deleteExon
 sub sortExons
   {
     my ($self)=@_;
-    if($self->{strand} eq "+")
-      {@{$self->{exons}}=sort {$a->{begin}<=>$b->{begin}} @{$self->{exons}}}
-    else
-      {@{$self->{exons}}=sort {$b->{begin}<=>$a->{begin}} @{$self->{exons}}}
+    if($self->{strand} eq "+") {
+      @{$self->{exons}}=sort {$a->{begin}<=>$b->{begin}} @{$self->{exons}};
+      if($self->{UTR})
+	{@{$self->{UTR}}=sort {$a->{begin}<=>$b->{begin}} @{$self->{UTR}}}
+    }
+    else {
+      @{$self->{exons}}=sort {$b->{begin}<=>$a->{begin}} @{$self->{exons}};
+      if($self->{UTR})
+	{@{$self->{UTR}}=sort {$b->{begin}<=>$a->{begin}} @{$self->{UTR}}}
+    }
   }
 #---------------------------------------------------------------------
 #   $transcript->adjustOrders();
@@ -504,7 +515,7 @@ sub toGff
       my $strand=$self->{strand};
       my $transID=$self->{transcriptId};
       my $geneID=$self->{geneId};
-      $gff.="$substrate\t$source\tgene\t$begin\t$end\t.\t$strand\t.\ttranscript_id=$transID;gene_id=$geneID;\n";
+      $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t.\t$strand\t.\ttranscript_id=$transID;gene_id=$geneID;\n";
     }
     for(my $i=0 ; $i<$numExons ; ++$i) {
       my $exon=$exons->[$i];
@@ -927,6 +938,57 @@ sub setStrand
 #  }
 #  return $sites;
 #}
+#---------------------------------------------------------------------
+#   $rawExons=$transcript->getRawExons(); # includes UTR (possibly coalesced)
+sub getRawExons
+{
+  my ($this)=@_;
+  my $exons=$this->{exons}; my $UTR=$this->{UTR};
+  my $rawExons=[];
+  foreach my $exon (@$exons) { push(@$rawExons,$exon->copy()) }
+  foreach my $utr (@$UTR) { push(@$rawExons,$utr->copy()) }
+
+  # Sort into chromosome order (temporarily)
+  @$rawExons=sort {$a->{begin} <=> $b->{begin} } @$rawExons;
+
+  # Now coalesce any UTR-exon pairs that are adjacent
+  my $n=@$rawExons;
+  for(my $i=0 ; $i<$n ; ++$i) {
+    my $exon=$rawExons->[$i];
+    $exon->setType("exon");
+    if($i+1<$n) {
+      my $nextExon=$rawExons->[$i+1];
+      if($exon->getEnd()==$nextExon->getBegin()) {
+	$exon->setEnd($nextExon->getEnd());
+	undef $nextExon;
+	splice(@$rawExons,$i+1,1);
+	--$n;
+	--$i;
+      }
+    }
+  }
+
+  # Sort into transcription order
+  my $strand=$this->getStrand();
+  if($strand eq "+") {
+    @$rawExons=sort {$a->{begin} <=> $b->{begin} } @$rawExons;
+  }
+  else { # - strand
+    @$rawExons=sort {$b->{begin} <=> $a->{begin} } @$rawExons;
+  }
+
+  return $rawExons;
+}
+#---------------------------------------------------------------------
+#   $n=$transcript->numUTR();
+sub numUTR
+{
+  my ($self)=@_;
+  my $UTR=$self->{UTR};
+  my $numUTR=0+@$UTR;
+  return $numUTR;
+}
+#---------------------------------------------------------------------
 #---------------------------------------------------------------------
 
 
