@@ -1040,7 +1040,10 @@ sub hashExtraFields
 {
   my ($self,$pairs)=@_;
   my $hash={};
-  foreach my $pair (@$pairs) { $hash->{$key}=$value }
+  foreach my $pair (@$pairs) {
+    my ($key,$value)=@$pair;
+    $hash->{$key}=$value;
+  }
   return $hash;
 }
 #---------------------------------------------------------------------
