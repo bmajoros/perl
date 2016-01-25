@@ -507,6 +507,15 @@ sub getSource
 sub toGff
   {
     my ($self)=@_;
+    my $transID=$self->{transcriptId};
+    my $geneID=$self->{geneId};
+    my $keyValuePairs=$self->parseExtraFields();
+    my $extraFields="";
+    foreach my $pair (@$keyValuePairs) {
+      my ($key,$value)=@$pair;
+      next if $key eq "gene_id" || $key eq "transcript_id";
+      $extraFields.="$key=$value;";
+    }
     my $exons=$self->{exons};
     my $numExons=@$exons;
     my $gff;
@@ -516,9 +525,7 @@ sub toGff
       my $substrate=$self->{substrate};
       my $source=$self->{source};
       my $strand=$self->{strand};
-      my $transID=$self->{transcriptId};
-      my $geneID=$self->{geneId};
-      $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t.\t$strand\t.\ttranscript_id=$transID;gene_id=$geneID;\n";
+      $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t.\t$strand\t.\ttranscript_id=$transID;gene_id=$geneID;$extraFields\n";
     }
     for(my $i=0 ; $i<$numExons ; ++$i) {
       my $exon=$exons->[$i];
