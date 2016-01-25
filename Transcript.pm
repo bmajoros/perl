@@ -89,6 +89,9 @@ use Carp;
 #   $transcriptCoord=$transcript->mapToTranscript($genomicCoord);
 #   $exon=$transcript->getExonContaining($genomicCoord);
 #   $array=$transcript->getSpliceSites();
+#   $array=$transcript->parseExtraFields(); # array of [key,value] pairs
+#   $transcript->setExtraFieldsFromKeyValuePairs(\@array); # [key,value]
+#   $transcript->setExtraFields($string);
 # Private methods:
 #   $transcript->adjustOrders();
 #   $transcript->sortExons();
@@ -988,6 +991,44 @@ sub numUTR
   my $numUTR=0+@$UTR;
   return $numUTR;
 }
+#---------------------------------------------------------------------
+#   $array=$transcript->parseExtraFields(); # array of [key,value] pairs
+sub parseExtraFields
+{
+  my ($self)=@_;
+  my $pairs=[];
+  my $string=$self->{extraFields};
+  my @fields=split/;/,$string;
+  foreach my $field (@fields) {
+    $field=~/(\S+)=(\S+)/;
+    my ($key,$value)=($1,$2);
+    if($value=~/"(\S+)"/) { $value=$1 }
+    push @$pairs,[$key,$value];
+  }
+  return $pairs;
+}
+#---------------------------------------------------------------------
+#   $transcript->setExtraFieldsFromKeyValuePairs(\@array); # [key,value]
+sub setExtraFieldsFromKeyValuePairs
+{
+  my ($self,$array)=@_;
+  my $string;
+  foreach my $pair (@$array) {
+    my ($key,$value)=@$pair;
+    $string.="$key=$value;";
+  }
+  $self->setExtraFields($string);
+}
+#---------------------------------------------------------------------
+#   $transcript->setExtraFields($string);
+sub setExtraFields
+{
+  my ($self,$string)=@_;
+  $self->{extraFields}=$string;
+}
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 
