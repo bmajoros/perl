@@ -90,6 +90,7 @@ use Carp;
 #   $exon=$transcript->getExonContaining($genomicCoord);
 #   $array=$transcript->getSpliceSites();
 #   $array=$transcript->parseExtraFields(); # array of [key,value] pairs
+#   $hash=$transcript->hashExtraFields(\@keyValuePairs);
 #   $transcript->setExtraFieldsFromKeyValuePairs(\@array); # [key,value]
 #   $transcript->setExtraFields($string);
 # Private methods:
@@ -1034,6 +1035,14 @@ sub setExtraFields
   $self->{extraFields}=$string;
 }
 #---------------------------------------------------------------------
+#   $hash=$transcript->hashExtraFields(\@keyValuePairs);
+sub hashExtraFields
+{
+  my ($self,$pairs)=@_;
+  my $hash={};
+  foreach my $pair (@$pairs) { $hash->{$key}=$value }
+  return $hash;
+}
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
