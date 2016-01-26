@@ -103,7 +103,22 @@ sub loadGFF
 	      if(!defined $transcript) {
 		$transcripts{$transcriptId}=$transcript=
 		  new Transcript($transcriptId,$strand);
+		$transcript->setStopCodons($self->{stopCodons});
+		$transcript->{readOrder}=$readOrder++;
+		$transcript->{substrate}=$fields[0];
+		$transcript->{source}=$fields[1];
+		$transcript->setBegin($begin);
+		$transcript->setEnd($end);
 	      }
+	      my $geneId;
+	      if(/genegrp=(\S+)/) {$geneId=$1}
+	      elsif(/gene_id[:=]?\s*\"?([^\s\;"]+)\"?/) {$geneId=$1}
+	      die $_ unless $geneId;
+	      $transcript->{geneId}=$geneId;
+	      my $gene=$genes{$geneId};
+	      if(!defined $gene)
+		{$genes{$geneId}=$gene=new Gene(); $gene->setId($geneId)}
+	      $transcript->setGene($gene);
 	      $transcript->{extraFields}=$transcriptExtraFields;
 	    }
 	  }

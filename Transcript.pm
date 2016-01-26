@@ -39,7 +39,8 @@ use Carp;
 #   $transcript->addExon($exon);
 #   $copy=$transcript->copy();
 #   $bool=$transcript->areExonTypesSet();
-#   $transcript->setExonTypes();
+#   $transcript->setExonTypes(); # initial-exon, internal-exon, etc...
+#   $transcript->setExonTypes("exon");
 #   $success=$transcript->loadExonSequences(\$axisSequence);
 #   $seq=$transcript->loadTranscriptSeq(\$axisSequence);
 #   $success=$transcript->loadExonSequencesCF($compiledFasta);
@@ -413,30 +414,34 @@ sub areExonTypesSet
   }
 #---------------------------------------------------------------------
 #   $transcript->setExonTypes();
+#   $transcript->setExonTypes("exon");
 sub setExonTypes
-  {
-    my ($self)=@_;
-    my $exons=$self->{exons};
-    my $numExons=@$exons;
-    my %validExonTypes=
-      %{{"single-exon"=>1,
-	 "initial-exon"=>1,
-         "internal-exon"=>1,
-         "final-exon"=>1}};
-    if($numExons==1)
-      {$exons->[0]->setType("single-exon")
-	 unless $validExonTypes{$exons->[0]->getType()}}
-    else
-      {
-	for(my $i=1 ; $i<$numExons-1 ; ++$i)
-	  {
-	    $exons->[$i]->setType("internal-exon")
-	      unless $validExonTypes{$exons->[$i]->getType()}
-	  }
-	$exons->[0]->setType("initial-exon");
-	$exons->[$numExons-1]->setType("final-exon");
-      }
+{
+  my ($self,$defaultType)=@_;
+  my $exons=$self->{exons};
+  my $numExons=@$exons;
+  if(length($defaultType)>0) {
+    for(my $i=0 ; $i<$numExons ; ++$i)
+      { $exons->[$i]->setType($defaultType) }
+    return;
   }
+  my %validExonTypes=
+    %{{"single-exon"=>1,
+	 "initial-exon"=>1,
+	   "internal-exon"=>1,
+	     "final-exon"=>1}};
+  if($numExons==1)
+    {$exons->[0]->setType("single-exon")
+       unless $validExonTypes{$exons->[0]->getType()}}
+  else {
+    for(my $i=1 ; $i<$numExons-1 ; ++$i) {
+      $exons->[$i]->setType("internal-exon")
+	unless $validExonTypes{$exons->[$i]->getType()}
+      }
+    $exons->[0]->setType("initial-exon");
+    $exons->[$numExons-1]->setType("final-exon");
+  }
+}
 #---------------------------------------------------------------------
 #   $transcript->deleteExonRef($exon);
 sub deleteExonRef
@@ -510,10 +515,15 @@ sub toGff
     my ($self)=@_;
     my $transID=$self->{transcriptId};
     my $geneID=$self->{geneId};
+
+    #my $debug=$self->{extraFields};
+    #print "transcript->toGff() extraFields=$debug\n";
+
     my $keyValuePairs=$self->parseExtraFields();
     my $extraFields="";
     foreach my $pair (@$keyValuePairs) {
       my ($key,$value)=@$pair;
+      #print "GGG $key $value\n";
       next if $key eq "gene_id" || $key eq "transcript_id";
       $extraFields.="$key=$value;";
     }
@@ -1008,7 +1018,7 @@ sub parseExtraFields
   my $string=$self->{extraFields};
   my @fields=split/;/,$string;
   foreach my $field (@fields) {
-    next unless $field=~/(\S+)\s+(\S+)/;
+    next unless $field=~/(\S+)[\s=]+(\S+)/;
     my ($key,$value)=($1,$2);
     if($value=~/"(\S+)"/) { $value=$1 }
     push @$pairs,[$key,$value];
