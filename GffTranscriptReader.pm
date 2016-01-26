@@ -94,6 +94,18 @@ sub loadGFF
 	  if($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/) {
 	    my $transcriptId=$1;
 	    $transcriptBeginEnd{$transcriptId}=[$begin,$end];
+	    if($fields[2] eq "transcript") {
+	      my $strand=$fields[6];
+	      my $transcriptExtraFields;
+	      for(my $i=8;$i<@fields;++$i)
+		{ $transcriptExtraFields.=$fields[$i]." " }
+	      my $transcript=$transcripts{$transcriptId};
+	      if(!defined $transcript) {
+		$transcripts{$transcriptId}=$transcript=
+		  new Transcript($transcriptId,$strand);
+	      }
+	      $transcript->{extraFields}=$transcriptExtraFields;
+	    }
 	  }
 	}
 	elsif($fields[2]=~/UTR/ || $fields[2]=~/utr/) {
@@ -132,12 +144,13 @@ sub loadGFF
 	    }
 	  }
 	  $transcript->{geneId}=$geneId;
-	  $transcript->{extraFields}=$extra;
+	  #$transcript->{extraFields}=$extra;
 	  my $gene=$genes{$geneId};
 	  if(!defined $gene)
 	    {$genes{$geneId}=$gene=new Gene(); $gene->setId($geneId)}
 	  $transcript->setGene($gene);
 	  my $exon=new Exon($exonBegin,$exonEnd,$transcript);
+	  $exon->{extraFields}=$extra;
 	  if(!$transcript->exonOverlapsExon($exon)) {
 	    $exon->{frame}=$frame;
 	    $exon->{score}=$exonScore;
@@ -184,12 +197,13 @@ sub loadGFF
 	    }
 	  }
 	  $transcript->{geneId}=$geneId;
-	  $transcript->{extraFields}=$extra;
+	  #$transcript->{extraFields}=$extra;
 	  my $gene=$genes{$geneId};
 	  if(!defined $gene) 
 	    {$genes{$geneId}=$gene=new Gene(); $gene->setId($geneId)}
 	  $transcript->setGene($gene);
 	  my $exon=new Exon($exonBegin,$exonEnd,$transcript);
+	  $exon->{extraFields}=$extra;
 	  if(!$transcript->exonOverlapsExon($exon)) {
 	    $exon->{frame}=$frame;
 	    $exon->{score}=$exonScore;
