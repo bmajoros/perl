@@ -1008,7 +1008,7 @@ sub parseExtraFields
   my $string=$self->{extraFields};
   my @fields=split/;/,$string;
   foreach my $field (@fields) {
-    $field=~/(\S+)\s+(\S+)/;
+    next unless $field=~/(\S+)\s+(\S+)/;
     my ($key,$value)=($1,$2);
     if($value=~/"(\S+)"/) { $value=$1 }
     push @$pairs,[$key,$value];
@@ -1024,10 +1024,10 @@ sub setExtraFieldsFromKeyValuePairs
   my $string;
   foreach my $pair (@$array) {
     my ($key,$value)=@$pair;
-    print "FFF $key $value\n";
+    #print "FFF $key $value\n";
     $string.="$key\=$value;";
   }
-  print "extra string=$string\n";
+  #print "extra string=$string\n";
   $self->setExtraFields($string);
 }
 #---------------------------------------------------------------------
