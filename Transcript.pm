@@ -516,14 +516,10 @@ sub toGff
     my $transID=$self->{transcriptId};
     my $geneID=$self->{geneId};
 
-    #my $debug=$self->{extraFields};
-    #print "transcript->toGff() extraFields=$debug\n";
-
     my $keyValuePairs=$self->parseExtraFields();
     my $extraFields="";
     foreach my $pair (@$keyValuePairs) {
       my ($key,$value)=@$pair;
-      #print "GGG $key $value\n";
       next if $key eq "gene_id" || $key eq "transcript_id";
       $extraFields.="$key=$value;";
     }
@@ -540,6 +536,13 @@ sub toGff
     }
     for(my $i=0 ; $i<$numExons ; ++$i) {
       my $exon=$exons->[$i];
+      my $exonGff=$exon->toGff();
+      $gff.=$exonGff;
+    }
+    my $UTR=$self->{UTR};
+    my $numUTR=@$UTR;
+    for(my $i=0 ; $i<$numUTR ; ++$i) {
+      my $exon=$UTR->[$i];
       my $exonGff=$exon->toGff();
       $gff.=$exonGff;
     }
