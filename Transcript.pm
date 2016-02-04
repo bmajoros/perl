@@ -479,6 +479,12 @@ sub recomputeBoundaries
 	$self->{begin}=$lastExon->{begin};
 	$self->{end}=$firstExon->{end};
       }
+    foreach my $utr (@{$self->{UTR}}) {
+      if($utr->getBegin()<$self->{begin})
+	{ $self->{begin}=$utr->getBegin() }
+      if($utr->getEnd()>$self->{end})
+	{ $self->{end}=$utr->getEnd() }
+    }
   }
 #---------------------------------------------------------------------
 #   $transcript->addExon($exon);
