@@ -7,8 +7,8 @@ use strict;
 #
 # A node in a parse tree for a Essex file (Hierarchical Exchange Language).
 # These parse trees are produced by the EssexParser.  Literals (such as
-# numbers and strings---i.e., the actual data) are not allocated a
-# EssexNode; a EssexNode represents a parenthesized expression only.
+# numbers and strings---i.e., the actual data) are not allocated an
+# EssexNode; an EssexNode represents a parenthesized expression only.
 # You can test whether something is a EssexNode via isaNode(), below.
 #
 # Attributes:
@@ -26,6 +26,7 @@ use strict;
 #   $array=$node->getElements();
 #   $bool=EssexNode->isaNode($datum);
 #   $node->print($filehandle);
+#   $node->recurse($visitor); # must have methods enter(node) and leave(node)
 #   $array=$node->query($query); # e.g., "book/chapter/section/page>34"
 #                                # operators: >,>=,<,<=,=,!=,~
 #                                # "~" means "contains substring"
@@ -197,6 +198,19 @@ sub query
     return $hits;
   }
 #---------------------------------------------------------------------
+#   $node->recurse($visitor); # must have methods enter(node) and leave(node)
+sub recurse
+{
+  my ($self,$visitor)=@_;
+  $visitor->enter($self);
+  my $elements=$self->{elements};
+  my $n=@$elements;
+  for(my $i=0 ; $i<$n ; ++$i) {
+    my $elem=$elements->[$i];
+    $elem->recurse($visitor);
+  }
+  $visitor->leave($self);
+}
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
