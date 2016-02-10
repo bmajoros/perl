@@ -20,6 +20,7 @@ use FileHandle;
 #   $w->appendToFasta($defline,$sequence,$filename);
 #   $w->writeFastaFromRef($defline,\$sequence,$filename);
 #   $w->addToFasta($defline,$sequence,$filehandle);
+#   $w->addToFastaRef($defline,\$sequence,$filehandle);
 #
 ######################################################################
 
@@ -88,6 +89,29 @@ sub addToFasta
     for(my $i=0 ; $i<$numLines ; ++$i)
       {
 	my $line=substr($sequence,$start,$width);
+	print $filehandle "$line\n";
+	$start+=$width;
+      }
+    if($length==0) {print $filehandle "\n"}
+  }
+#---------------------------------------------------------------------
+#   $w->addToFastaRef($defline,\$sequence,$filehandle);
+sub addToFastaRef
+{
+    my ($self,$defline,$seqRef,$filehandle)=@_;
+    
+    chop $defline if($defline=~/\n$/);
+    $defline=">$defline" unless $defline=~/^>/;
+
+    my $width=$self->{width};
+    print $filehandle "$defline\n";
+    my $length=length $$seqRef;
+    my $numLines=int($length/$width);
+    ++$numLines if($length % $width);
+    my $start=0;
+    for(my $i=0 ; $i<$numLines ; ++$i)
+      {
+	my $line=substr($$seqRef,$start,$width);
 	print $filehandle "$line\n";
 	$start+=$width;
       }
