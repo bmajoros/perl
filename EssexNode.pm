@@ -24,7 +24,7 @@ use strict;
 #   $array=$node->findDescendents($tag);
 #   $string=$node->getAttribute($attributeTag);
 #   $array=$node->getElements();
-#   $bool=EssexNode->isaNode($datum);
+#   $bool=EssexNode::isaNode($datum);
 #   $node->print($filehandle);
 #   $node->recurse($visitor); # must have methods enter(node) and leave(node)
 #   $array=$node->query($query); # e.g., "book/chapter/section/page>34"
@@ -87,10 +87,11 @@ sub getElements
     return $self->{elements};
   }
 #---------------------------------------------------------------------
-#   $bool=EssexNode->isaNode($datum);
+#   $bool=EssexNode::isaNode($datum);
 sub isaNode
   {
-    my ($class,$x)=@_;
+    my ($x)=@_;
+    #my $debug=ref($x) ; print "XXX $debug\n";
     return ref($x) eq "EssexNode";
   }
 #---------------------------------------------------------------------
@@ -102,7 +103,7 @@ sub findChild
     my $n=@$elements;
     for(my $i=0 ; $i<$n ; ++$i) {
       my $elem=$elements->[$i];
-      if(EssexNode->isaNode($elem) && $elem->getTag() eq $tag) {
+      if(EssexNode::isaNode($elem) && $elem->getTag() eq $tag) {
 	return $elem;
       }
     }
@@ -118,7 +119,7 @@ sub findChildren
     my $n=@$elements;
     for(my $i=0 ; $i<$n ; ++$i) {
       my $elem=$elements->[$i];
-      if(EssexNode->isaNode($elem) && $elem->getTag() eq $tag) {
+      if(EssexNode::isaNode($elem) && $elem->getTag() eq $tag) {
 	push @$results,$elem;
       }
     }
@@ -133,7 +134,7 @@ sub getAttribute
     my $n=@$elements;
     for(my $i=0 ; $i<$n ; ++$i) {
       my $elem=$elements->[$i];
-      if(EssexNode->isaNode($elem) && $elem->getTag() eq $tag) {
+      if(EssexNode::isaNode($elem) && $elem->getTag() eq $tag) {
 	return $elem->getIthElem(0);
       }
     }
@@ -229,7 +230,7 @@ sub findDesc
     my ($self,$tag,$array)=@_;
     my $children=$self->{children};
     foreach my $child (@$children) {
-      if(EssexNode->isaNode($child)) {
+      if(EssexNode::isaNode($child)) {
 	if($child->{tag} eq $tag) { push @$array,$child }
 	else { $child->findDesc($tag,$array) }
       }
@@ -252,7 +253,7 @@ sub printRecursive
       print $file "$spacing($tag\n";
       for(my $i=0 ; $i<$numElems ; ++$i) {
 	my $elem=$elements->[$i];
-	if(EssexNode->isaNode($elem)) {
+	if(EssexNode::isaNode($elem)) {
 	  $elem->printRecursive($depth+1,$file);
 	}
 	else {

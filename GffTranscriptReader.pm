@@ -274,6 +274,9 @@ sub loadGFF
 	  $transcript->{startCodon}=$startCodonBegin;
 	  $transcript->{startCodonAbsolute}=$startCodonBegin;
 	}
+	else {
+	  # Non-genic element -- save for later?
+	}
       }
     close(GFF);
     my $transcripts=[];

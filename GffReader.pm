@@ -15,6 +15,7 @@ use Feature;
 # Methods:
 #   $reader=new GffReader();
 #   $featureArray=$reader->loadGFF($filename);
+#   $featureArray=$reader->loadNonGenic($filename);
 #   $bySubstrateHash=$reader->hashBySubstrate($filename); 
 #       returns a hash in which each key is a substrate ID and the 
 #       corresponding value is a pointer to an array of features which 
@@ -39,6 +40,26 @@ sub new
   return $self;
 }
 #---------------------------------------------------------------------
+# $featureArray=$reader->loadNonGenic($filename);
+sub loadNonGenic
+{
+  my ($self,$filename)=@_;
+  my $features=$self->loadGFF($filename);
+  my $return=[];
+  my $n=@$features;
+  for(my $i=0 ; $i<$n ; ++$i) {
+    my $feature=$features->[$i];
+    my $type=$feature->getType();
+    if($type=~/exon/ || $type eq "CDS" || $type=~/utr/ || $type=~/UTR/
+       || $type eq "gene" || $type eq "transcript" || $type eq "translation"){
+      undef $feature;
+      next
+    }
+    push @$return,$feature;
+  }
+  undef $features;
+  return $return;
+}
 #----------------------------------------------------------------
 # $featureArray=$reader->loadGFF($filename);
 #
