@@ -25,6 +25,7 @@ use strict;
 #   $string=$node->getAttribute($attributeTag);
 #   $array=$node->getElements();
 #   $bool=EssexNode::isaNode($datum);
+#   $bool=$node->hasCompositeChildren;
 #   $node->print($filehandle);
 #   $node->recurse($visitor); # must have methods enter(node) and leave(node)
 #   $array=$node->query($query); # e.g., "book/chapter/section/page>34"
@@ -237,33 +238,45 @@ sub findDesc
     }
   }
 #---------------------------------------------------------------------
+sub hasCompositeChildren
+{
+  my ($self)=@_;
+  my $children=$self->{elements};
+  my $numChildren=$children ? @$children : 0;
+  for(my $i=0 ; $i<$numChildren ; ++$i)
+    { if(EssexNode::isaNode($children->[$i])) { return 1 } }
+  return 0;
+}
+#---------------------------------------------------------------------
 sub printRecursive
-  {
-    my ($self,$depth,$file)=@_;
-    my $spacing='    'x$depth;
-    my $tag=$self->{tag};
-    my $elements=$self->{elements};
-    my $numElems=@$elements;
-    if($numElems==0) {print $file "$spacing($tag)\n"}
-    elsif($numElems==1 && ref($elements->[0]) ne "EssexNode") {
-      my $elem=$elements->[0];
-      print $file "$spacing($tag $elem)\n";
-    }
-    else {
-      print $file "$spacing($tag\n";
-      for(my $i=0 ; $i<$numElems ; ++$i) {
-	my $elem=$elements->[$i];
-	if(EssexNode::isaNode($elem)) {
-	  $elem->printRecursive($depth+1,$file);
-	}
-	else {
-	  my $spacing='    'x($depth+1);
-	  print $file "$spacing$elem\n" 
-	}
-      }	
-      print $file "$spacing)\n";
+{
+  my ($self,$depth,$file)=@_;
+  my $tab='   'x$depth;
+  my $tag=$self->{tag};
+  print $file "$tab($tag";
+  my $elements=$self->{elements};
+  my $n=$elements ? @$elements : 0;
+  if($self->hasCompositeChildren()) {
+    for(my $i=0 ; $i<$n ; ++$i) {
+      my $child=$elements->[$i];
+      if(EssexNode::isaNode($child)) {
+	print $file "\n";
+	$child->printRecursive($depth+1,$file);
+      }
+      else {
+	my $tab='   'x($depth+1);
+	print $file "\n$tab$child";
+      }
     }
   }
+  else {
+    for(my $i=0 ; $i<$n ; ++$i) {
+      my $elem=$elements->[$i];
+      print $file " $elem";
+    }
+  }
+  print $file ")";
+}
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
