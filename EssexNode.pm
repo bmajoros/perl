@@ -228,7 +228,7 @@ sub recurse
 sub findDesc
   {
     my ($self,$tag,$array)=@_;
-    my $children=$self->{children};
+    my $children=$self->{elements};
     foreach my $child (@$children) {
       if(EssexNode::isaNode($child)) {
 	if($child->{tag} eq $tag) { push @$array,$child }
