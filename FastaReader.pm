@@ -25,6 +25,7 @@ use Carp;
 #   $size=FastaReader::getGenomicSize($filename);
 #   FastaReader::readAll($filename); # returns hash : id->sequence
 #   FastaReader::readAllAndKeepDefs($filename); # returns hash : id->[def,seq]
+#   $seq=FastaReader::firstSequence($filename);
 #   $reader->dontUppercase();
 #
 ######################################################################
@@ -163,6 +164,20 @@ sub dontUppercase
     my ($self)=@_;
     $self->{shouldUppercase}=0;
   }
+#---------------------------------------------------------------------
+#   $seq=FastaReader::firstSequence($filename);
+sub firstSequence
+{
+  my ($filename)=@_;
+  my $reader=new FastaReader($filename);
+  my ($def,$seq)=$reader->nextSequence();
+  die "FASTA file is empty: $filename\n" unless defined $def;
+  undef $reader;
+  return $seq;
+}
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
 #---------------------------------------------------------------------
 
 
