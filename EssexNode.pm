@@ -69,7 +69,7 @@ sub numElements
   {
     my ($self)=@_;
     my $elements=$self->{elements};
-    my $n=@$elements;
+    my $n=$elements ? @$elements : 0;
     return $n;
   }
 #---------------------------------------------------------------------

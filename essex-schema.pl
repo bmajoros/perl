@@ -12,7 +12,7 @@ my $nextID=1;
 my $parser=new EssexParser($infile);
 while(1) {
   my $root=$parser->nextElem();
-  if(EssexNode::isaNode($node)) { recurse($root) }
+  if(EssexNode::isaNode($root)) { recurse($root) }
 }
 
 my @keys=keys %schema;
