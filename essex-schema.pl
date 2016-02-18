@@ -12,6 +12,7 @@ my $nextID=1;
 my $parser=new EssexParser($infile);
 while(1) {
   my $root=$parser->nextElem();
+  last unless $root;
   if(EssexNode::isaNode($root)) { recurse($root) }
 }
 
