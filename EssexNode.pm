@@ -21,7 +21,9 @@ use strict;
 #   $elem=$node->getIthElem($i);
 #   $elem=$node->findChild($tag);
 #   $array=$node->findChildren($tag);
-#   $array=$node->findDescendents($tag);
+#   $array=$node->findDescendents($tag); # always returns an array
+#   $n=$node->countDescendents($tag);
+#   $bool=$node->hasDescendent($tag);
 #   $string=$node->getAttribute($attributeTag);
 #   $array=$node->getElements();
 #   $bool=EssexNode::isaNode($datum);
@@ -148,6 +150,31 @@ sub print
     my ($self,$file)=@_;
     $self->printRecursive(0,$file);
   }
+#---------------------------------------------------------------------
+#   $bool=$node->hasDescendent($tag);
+sub hasDescendent
+{
+  my ($self,$tag)=@_;
+  my $children=$self->{elements};
+  if($children) {
+    foreach my $child (@$children) {
+      if(EssexNode::isaNode($child)) {
+	if($child->{tag} eq $tag || $child->hasDescendent($tag)) { return 1 }
+      }
+      if($child eq $tag) { return 1 }
+    }
+  }
+  return 0;
+}
+#---------------------------------------------------------------------
+#   $n=$node->countDescendents($tag);
+sub countDescendents
+{
+  my ($self,$tag)=@_;
+  my $array=$self->findDescendents($tag);
+  my $n=@$array;
+  return $n;
+}
 #---------------------------------------------------------------------
 #   $array=$node->findDescendents($tag);
 sub findDescendents
