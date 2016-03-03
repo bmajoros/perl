@@ -22,6 +22,7 @@ use strict;
 #   $elem=$node->findChild($tag);
 #   $array=$node->findChildren($tag);
 #   $array=$node->findDescendents($tag); # always returns an array
+#   $bool=$node->hasDescendentOrDatum($tagOrDatum);
 #   $n=$node->countDescendents($tag);
 #   $bool=$node->hasDescendent($tag);
 #   $string=$node->getAttribute($attributeTag);
@@ -254,16 +255,33 @@ sub recurse
 #                         PRIVATE METHODS
 #---------------------------------------------------------------------
 sub findDesc
-  {
-    my ($self,$tag,$array)=@_;
-    my $children=$self->{elements};
-    foreach my $child (@$children) {
-      if(EssexNode::isaNode($child)) {
-	if($child->{tag} eq $tag) { push @$array,$child }
-	else { $child->findDesc($tag,$array) }
-      }
+{
+  my ($self,$tag,$array)=@_;
+  my $children=$self->{elements};
+  foreach my $child (@$children) {
+    if(EssexNode::isaNode($child)) {
+      if($child->{tag} eq $tag) { push @$array,$child }
+      else { $child->findDesc($tag,$array) }
     }
   }
+}
+#---------------------------------------------------------------------
+#   $bool=$node->hasDescendentOrDatum($tagOrDatum);
+sub hasDescendentOrDatum
+{
+  my ($self,$tag)=@_;
+  if($self->{tag} eq $tag) { return 1 }
+  my $children=$self->{elements};
+  foreach my $child (@$children) {
+    if(EssexNode::isaNode($child)) {
+      if($child->hasDescendentOrDatum($tag)) { return 1 }
+    }
+    else { # not a node
+      if($child eq $tag) { return 1 }
+    }
+  }
+  return 0;
+}
 #---------------------------------------------------------------------
 sub hasCompositeChildren
 {

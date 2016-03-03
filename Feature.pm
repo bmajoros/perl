@@ -17,12 +17,10 @@ use Exon;
 #   score
 #   strand : + or -
 #   frame
-#   id
-#   additionalFields
+#   extraFields
 # Methods:
 #   $feature=new Feature($substrate,$source,$featureType,$fivePrime,
-#                        $threePrime,$score,$strand,$frame,$id,
-#                        $additionalFields);
+#                        $threePrime,$score,$strand,$frame,$extraFields);
 #   $gff=$feature->toGff();
 #   $begin=$feature->getBegin();
 #   $end=$feature->getEnd();
@@ -42,6 +40,8 @@ use Exon;
 #   $strand=$feature->getStrand();
 #   $feature->shiftCoords($delta);
 #   $source=$feature->getSource();
+#   $array=$feature->getExtraFields(); # array of [key,value] pairs
+#   $hash=$feature->getExtraAsHash();
 #   
 ######################################################################
 
@@ -50,12 +50,11 @@ use Exon;
 #                           PUBLIC METHODS
 #---------------------------------------------------------------------
 #   $feature=new Feature($substrate,$source,$featureType,$fivePrime,
-#                        $threePrime,$score,$strand,$frame,$id,
-#                        $additionalFields);
+#                        $threePrime,$score,$strand,$frame,$extraFields)
 sub new
 {
   my ($class,$substrate,$source,$featureType,$fivePrime,$threePrime,
-      $score,$strand,$frame,$id,$additionalFields)=@_;
+      $score,$strand,$frame,$extraFields)=@_;
   
   if($fivePrime>=$threePrime)
     {($fivePrime,$threePrime)=($threePrime,$fivePrime)}
@@ -69,8 +68,7 @@ sub new
      score=>$score,
      strand=>$strand,
      frame=>$frame,
-     id=>$id,
-     additionalFields=>$additionalFields,
+     extraFields=>$extraFields
     };
   bless $self,$class;
 
@@ -95,8 +93,7 @@ sub getLength
 sub toGff
   {
     my ($self)=@_;
-    
-    my $additionalFields=join("",@{$self->{additionalFields}});
+    my $extraFields=$self->{extraFields};
     my $substrate=$self->{substrate};
     my $source=$self->{source};
     my $featureType=$self->{featureType};
@@ -105,10 +102,8 @@ sub toGff
     my $score=$self->{score};
     my $strand=$self->{strand};
     my $frame=$self->{frame};
-    my $id=$self->{id};
     my $ending="";
-    if(length($id)>0) {$ending.="\t$id"}
-    if(length($additionalFields)>0) {$ending.="\t$additionalFields"}
+    if(length($extraFields)>0) {$ending.="\t$extraFields"}
     return "$substrate\t$source\t$featureType\t$fivePrime\t$threePrime\t$score\t$strand\t$frame$ending\n";
   }
 #---------------------------------------------------------------------
@@ -182,8 +177,7 @@ sub intersect
     my $intersection=new Feature($self->{substrate},$self->{source},
 				 $self->{featureType},$newBegin,$newEnd,
 				 $self->{score},$self->{strand},
-				 $self->{frame},$self->{id},
-				 $self->{additionalFields});
+				 $self->{frame},$self->{extraFields});
     return $intersection;
   }
 #---------------------------------------------------------------------
@@ -237,7 +231,35 @@ sub getSource
     return $self->{source};
 }
 #---------------------------------------------------------------------
+#   $array=$feature->getExtraFields();
+sub getExtraFields
+{
+  my ($self)=@_;
+  my $extraFields=$self->{extraFields};
+  my @fields=split/;/,$extraFields;
+  my $ret=[];
+  foreach my $field (@fields) {
+    next unless $field=~/\S/;
+    $field=~/([^=\s]+)[\s=]+([^=\s]+)/ || die "can't parse attribute: $field";
+    my ($key,$value)=($1,$2);
+    if($value=~/^"(\S+)"$/) { $value=$1 }
+    push @$ret,[$key,$value];
+  }
+  return $ret;
+}
 #---------------------------------------------------------------------
+#   $hash=$feature->getExtraAsHash();
+sub getExtraAsHash
+{
+  my ($self)=@_;
+  my $array=$self->getExtraFields();
+  my $hash={};
+  foreach my $elem (@$array) {
+    my ($key,$value)=@$elem;
+    $hash->{$key}=$value;
+  }
+  return $hash;
+}
 #---------------------------------------------------------------------
 
 

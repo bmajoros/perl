@@ -14,6 +14,7 @@ use Feature;
 #
 # Methods:
 #   $reader=new GffReader();
+#   $feature=$reader->nextFeature($filehandle);
 #   $featureArray=$reader->loadGFF($filename);
 #   $featureArray=$reader->loadNonGenic($filename);
 #   $bySubstrateHash=$reader->hashBySubstrate($filename); 
@@ -75,7 +76,7 @@ sub loadGFF
       {
 	next unless $_=~/\S+/;
 	next if $_=~/^\s*\#/;
-	my @fields=split/\s+/,$_;
+	my @fields=split/\t/,$_;
 	next unless @fields>7;
 	my @additionalFields=splice(@fields,8);
 	my $feature=new Feature($fields[0],$fields[1],$fields[2],
@@ -88,6 +89,24 @@ sub loadGFF
     @features=sort {$a->{begin} <=> $b->{begin}} @features;
     return \@features;
   }
+#--------------------------------------------------------------------------
+#   $feature=$reader->nextFeature($filehandle);
+sub nextFeature
+{
+  my ($self,$fh)=@_;
+  die "no filehandle found" unless $fh;
+  while(<$fh>) {
+    next unless $_=~/\S+/;
+    next if $_=~/^\s*\#/;
+    my @fields=split/\t/,$_;
+    next unless @fields>7;
+    my $feature=new Feature($fields[0],$fields[1],$fields[2],
+			    $fields[3]-1,$fields[4],$fields[5],
+			    $fields[6],$fields[7],$fields[8]);
+    return $feature;
+  }
+  return undef;
+}
 #--------------------------------------------------------------------------
 #   $bySubstrateHash=$reader->hashBySubstrate($filename);
 sub hashBySubstrate
