@@ -303,6 +303,7 @@ sub allAltStructuresLOF
     my $string=$fate->getIthElem(0);
     my $LOF=0;
     if($string eq "NMD") { $LOF=1 }
+    elsif($string eq "nonstop-decay" }
     elsif($refIsCoding && $string eq "noncoding") { $LOF=1 }
     elsif($string eq "protein-differs") {
       my $match=$fate->findChild("percent-match");
