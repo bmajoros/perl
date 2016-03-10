@@ -78,11 +78,9 @@ sub loadGFF
 	next if $_=~/^\s*\#/;
 	my @fields=split/\t/,$_;
 	next unless @fields>7;
-	my @additionalFields=splice(@fields,8);
 	my $feature=new Feature($fields[0],$fields[1],$fields[2],
 				$fields[3]-1,$fields[4],$fields[5],
-				$fields[6],$fields[7],$fields[8],
-				\@additionalFields);
+				$fields[6],$fields[7],$fields[8]);
 	push @features,$feature;
       }
     close(GFF);

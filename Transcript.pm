@@ -5,6 +5,7 @@ use Exon;
 use Translation;
 use CodonIterator;
 use CompiledFasta;
+use EssexNode;
 #use SpliceSite;
 use Carp;
 
@@ -35,6 +36,7 @@ use Carp;
 #   extraFields : a string of extra fields from the end of the GFF line
 # Methods:
 #   $transcript=new Transcript($id,$strand);
+#   $transcript=new Transcript($essexNode);
 #   $rawExons=$transcript->getRawExons(); # includes UTR (possibly coalesced)
 #   $transcript->addExon($exon);
 #   $copy=$transcript->copy();
@@ -103,19 +105,57 @@ use Carp;
 #---------------------------------------------------------------------
 #                           PUBLIC METHODS
 #---------------------------------------------------------------------
+#   $transcript=new Transcript($id,$strand);
+#   $transcript=new Transcript($essexNode);
 sub new
 {
   my ($class,$id,$strand)=@_;
 
-  my $self=
-    {
-     transcriptId=>$id,
-     strand=>$strand,
-     exons=>[],
-     UTR=>[],
-     stopCodons=>{TAG=>1,TGA=>1,TAA=>1},
-    };
-  bless $self,$class;
+  my $self;
+  if(EssexNode::isaNode($id)) {
+    my $essex=$id;
+    $self=
+      {
+       transcriptId=>$essex->getAttribute("ID"),
+       strand=>$essex->getAttribute("strand"),
+       source=>$essex->getAttribute("source"),
+       begin=>$essex->getAttribute("begin"),
+       end=>$essex->getAttribute("end"),
+       geneId=>$essex->getAttribute("gene"),
+       exons=>[],
+       UTR=>[],
+       stopCodons=>{TAG=>1,TGA=>1,TAA=>1},
+      };
+    bless $self,$class;
+    my $exons=$self->{exons}; my $UTR=$self->{UTR};
+    my $exonsElem=$essex->findChild("exons");
+    if($exonsElem) {
+      my $n=$exonsElem->numElements();
+      for(my $i=0 ; $i<$n ; ++$i) {
+	my $exon=$exonsElem->getIthElem($i);
+	my $begin=$exon->getIthElem(0); my $end=$exon->getIthElem(1);
+	$exon=new Exon($begin,$end,$self);
+	push @{$exons},$exon; } }
+    my $utrElem=$essex->findChild("exons");
+    if($utrElem) {
+      my $n=$utrElem->numElements();
+      for(my $i=0 ; $i<$n ; ++$i) {
+	my $exon=$utrElem->getIthElem($i);
+	my $begin=$exon->getIthElem(0); my $end=$exon->getIthElem(1);
+	$exon=new Exon($begin,$end,$self);
+	push @{$UTR},$exon; } }
+  }
+  else {
+    $self=
+      {
+       transcriptId=>$id,
+       strand=>$strand,
+       exons=>[],
+       UTR=>[],
+       stopCodons=>{TAG=>1,TGA=>1,TAA=>1},
+      };
+    bless $self,$class;
+  }
 
   return $self;
 }
