@@ -28,6 +28,7 @@ use Transcript;
 #   $statusString=$fbiReport->getStatusString();
 #             status=mapped/splicing-changes/no-transcript
 #   $bool=$fbiReport->hasBrokenSpliceSite();
+#   $array=$fbiReport->getAltTranscripts();
 #   $bool=$fbiReport->proteinDiffers();
 #   $percent=$fbiReport->getProteinMatch(); # example: 98.57 (whole number)
 #   $bool=$fbiReport->frameshift();
@@ -126,6 +127,21 @@ sub getRefTranscript
   return new Transcript($trans);
 }
 #---------------------------------------------------------------------
+#   $array=$fbiReport->getAltTranscripts();
+sub getAltTranscripts
+{
+  my ($self)=@_;
+  my $altElem=$self->{essex}->findDescendents("alternate-structures");
+  my $array=[];
+  if($altElem) {
+    my $children=$altElem->findChildren("transcript");
+    foreach my $child (@$children) {
+      push @$array,new Transcript($child);
+    }
+  }
+  return $array;
+}
+#---------------------------------------------------------------------
 #   $transcript=$fbiReport->getMappedTranscript();
 sub getMappedTranscript
 {
@@ -151,7 +167,11 @@ sub getStatusString
 sub hasBrokenSpliceSite
 {
   my ($self)=@_;
-  
+  my $status=$self->{essex}->findChild("status");
+  die "no status" unless $status;
+  die "empty status" unless $status->numElements()>0;
+  return $status->findChild("broken-donor") || 
+    $status->findChild("broken-acceptor");
 }
 #---------------------------------------------------------------------
 #   $bool=$fbiReport->proteinDiffers();
