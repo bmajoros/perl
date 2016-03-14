@@ -27,6 +27,7 @@ use Transcript;
 #   $transcript=$fbiReport->getMappedTranscript();
 #   $statusString=$fbiReport->getStatusString();
 #             status=mapped/splicing-changes/no-transcript
+#   $bool=$fbiReport->hasBrokenSpliceSite();
 #   $bool=$fbiReport->proteinDiffers();
 #   $percent=$fbiReport->getProteinMatch(); # example: 98.57 (whole number)
 #   $bool=$fbiReport->frameshift();
@@ -144,6 +145,13 @@ sub getStatusString
   die "empty status" unless $status->numElements()>0;
   my $string=$status->getIthElem(0);
   return $string;
+}
+#---------------------------------------------------------------------
+#   $bool=$fbiReport->hasBrokenSpliceSite();
+sub hasBrokenSpliceSite
+{
+  my ($self)=@_;
+  
 }
 #---------------------------------------------------------------------
 #   $bool=$fbiReport->proteinDiffers();
@@ -303,7 +311,7 @@ sub allAltStructuresLOF
     my $string=$fate->getIthElem(0);
     my $LOF=0;
     if($string eq "NMD") { $LOF=1 }
-    elsif($string eq "nonstop-decay" }
+    elsif($string eq "nonstop-decay") { $LOF=1 }
     elsif($refIsCoding && $string eq "noncoding") { $LOF=1 }
     elsif($string eq "protein-differs") {
       my $match=$fate->findChild("percent-match");
