@@ -16,7 +16,7 @@ use Transcript;
 # Methods:
 #   $fbiReport=new EssexFBI($essexReportElem);
 #   $fbiReport->changeMinPercentMatch($x); # example: 75.3
-#   $substrate=$fbiReport->getSubstate();
+#   $substrate=$fbiReport->getSubstrate();
 #   $transcriptID=$fbiReport->getTranscriptID();
 #   $geneID=$fbiReport->getGeneID();
 #   $vcfWarnings=$fbiReport->getNumVcfWarnings();
@@ -67,7 +67,7 @@ sub new
   return $self;
 }
 #---------------------------------------------------------------------
-#   $substrate=$fbiReport->getSubstate();
+#   $substrate=$fbiReport->getSubstrate();
 sub getSubstrate
 {
   my ($self)=@_;
