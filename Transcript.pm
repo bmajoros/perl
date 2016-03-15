@@ -136,7 +136,7 @@ sub new
 	my $begin=$exon->getIthElem(0); my $end=$exon->getIthElem(1);
 	$exon=new Exon($begin,$end,$self);
 	push @{$exons},$exon; } }
-    my $utrElem=$essex->findChild("exons");
+    my $utrElem=$essex->findChild("UTR");
     if($utrElem) {
       my $n=$utrElem->numElements();
       for(my $i=0 ; $i<$n ; ++$i) {
