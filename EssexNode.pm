@@ -21,7 +21,8 @@ use strict;
 #   $elem=$node->getIthElem($i);
 #   $elem=$node->findChild($tag);
 #   $array=$node->findChildren($tag);
-#   $array=$node->findDescendents($tag); # always returns an array
+#   $array=$node->findDescendents($tag);# always returns an array
+#   $elem=$node->findDescendent($tag); # returns node or undef
 #   $bool=$node->hasDescendentOrDatum($tagOrDatum);
 #   $n=$node->countDescendents($tag);
 #   $bool=$node->hasDescendent($tag);
@@ -264,6 +265,21 @@ sub findDesc
       else { $child->findDesc($tag,$array) }
     }
   }
+}
+#---------------------------------------------------------------------
+# my $elem=$node->findDescendent("tag");
+sub findDescendent
+{
+  my ($self,$tag)=@_;
+  my $children=$self->{elements};
+  foreach my $child (@$children) {
+    if(EssexNode::isaNode($child))
+      { if($child->{tag} eq $tag) { return $child } }
+  foreach my $child (@$children) {
+    if(EssexNode::isaNode($child))
+      { my $desc=$child->findDescendent($tag); if($desc) {return $desc} }
+  }
+  return undef;
 }
 #---------------------------------------------------------------------
 #   $bool=$node->hasDescendentOrDatum($tagOrDatum);
