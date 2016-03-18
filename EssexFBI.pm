@@ -35,7 +35,7 @@ use Transcript;
 #   $percent=$fbiReport->frameshiftPercentMismatch(); # example: 83 (whole num)
 #   $nucs=$fbiReport->frameshiftNucMismatch();
 #   $bool=$fbiReport->mappedPTC(); # premature stop codon when status="mapped"
-#   $bool=$fbiReport->mappedNMD(); # only valid when status="mapped"
+#   $bool=$fbiReport->mappedNMD(50); # only valid when status="mapped"
 #   $bool=$fbiReport->mappedNoStart(); # assumes status="mappped"
 #   $bool=$fbiReport->mappedNonstop(); # no stop codon; status must = "mapped"
 #   $bool=$fbiReport->refIsCoding();
@@ -43,6 +43,7 @@ use Transcript;
 #   $bool=$fbiReport->lossOfCoding(); # ref is coding, alt is noncoding
 #   $bool=$fbiReport->allAltStructuresLOF(); # assumes status=splicing-changes,
 #          LOF (loss of function) means NMD or noncoding
+#   $bool=$fbiReport->allExonSkippingLOF(); # assumes status=splicing-changes,
 #
 # Private Methods:
 #
@@ -258,16 +259,17 @@ sub mappedPTC
   return $PTC ? 1 : 0;
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->mappedNMD(); # only valid when status="mapped"
+#   $bool=$fbiReport->mappedNMD($fifty); # only valid when status="mapped"
 sub mappedNMD
 {
-  my ($self)=@_;
+  my ($self,$fifty)=@_;
   my $status=$self->{essex}->findChild("status");
   die "no status" unless $status;
   my $PTC=$status->findChild("premature-stop");
   if(!$PTC) { return 0 }
   die "premature-stop element has no children" unless $PTC->numElements()>0;
-  return $PTC->getIthElem(0) eq "NMD";
+  return($PTC->getIthElem(0) eq "NMD" &&
+	 $PTC->getAttribute("EJC-distance")>=$fifty);
 }
 #---------------------------------------------------------------------
 #   $bool=$fbiReport->mappedNoStart(); # assumes status="mappped"
@@ -316,6 +318,37 @@ sub lossOfCoding
 #   $bool=$fbiReport->allAltStructuresLOF(); # assumes status=splicing-changes,
 #          LOF (loss of function) means NMD or noncoding
 sub allAltStructuresLOF
+{
+  my ($self)=@_;
+  my $alts=$self->{essex}->findDescendents("alternate-structures");
+  die "no alternate-structures" unless @$alts>0;
+  $alts=$alts->[0];
+  my $refIsCoding=$self->refIsCoding();
+  my $transcripts=$alts->findDescendents("transcript");
+  foreach my $transcript (@$transcripts) {
+    my $array=$transcript->findDescendents("fate");
+    die "no fate" unless @$array>0;
+    my $fate=$array->[0];
+    die "empty fate" unless $fate && $fate->numElements()>0;
+    my $string=$fate->getIthElem(0);
+    my $LOF=0;
+    if($string eq "NMD") { $LOF=1 }
+    elsif($string eq "nonstop-decay") { $LOF=1 }
+    elsif($refIsCoding && $string eq "noncoding") { $LOF=1 }
+    elsif($string eq "protein-differs") {
+      my $match=$fate->findChild("percent-match");
+      die "no percent-match in fate" unless $match;
+      die "percent-match has no children" unless $match->numElements()>0;
+      my $percent=0+$match->getIthElem(0);
+      if($percent<$self->{minPercentMatch}) { $LOF=1 }
+    }
+    if(!$LOF) { return 0 }
+  }
+  return 1;
+}
+#---------------------------------------------------------------------
+#   $bool=$fbiReport->allExonSkippingLOF(); # assumes status=splicing-changes,
+sub allExonSkippingLOF
 {
   my ($self)=@_;
   my $alts=$self->{essex}->findDescendents("alternate-structures");
