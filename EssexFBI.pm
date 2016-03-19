@@ -28,6 +28,7 @@ use Transcript;
 #   $statusString=$fbiReport->getStatusString();
 #             status=mapped/splicing-changes/no-transcript
 #   $bool=$fbiReport->hasBrokenSpliceSite();
+#   $array=$report->getBrokenSpliceSites(); [pos,type=GT/AG]
 #   $array=$fbiReport->getAltTranscripts();
 #   $bool=$fbiReport->proteinDiffers();
 #   $percent=$fbiReport->getProteinMatch(); # example: 98.57 (whole number)
@@ -43,7 +44,8 @@ use Transcript;
 #   $bool=$fbiReport->lossOfCoding(); # ref is coding, alt is noncoding
 #   $bool=$fbiReport->allAltStructuresLOF(); # assumes status=splicing-changes,
 #          LOF (loss of function) means NMD or noncoding
-#   $bool=$fbiReport->allExonSkippingLOF(); # assumes status=splicing-changes,
+#   $bool=$fbiReport->allExonSkippingLOF(); # assumes status=splicing-changes
+#   $bool=$fbiReport->allExonSkippingNMD(); # assumes status=splicing-changes
 #
 # Private Methods:
 #
@@ -173,6 +175,23 @@ sub hasBrokenSpliceSite
   die "empty status" unless $status->numElements()>0;
   return $status->findChild("broken-donor") || 
     $status->findChild("broken-acceptor");
+}
+#---------------------------------------------------------------------
+#   $array=$report->getBrokenSpliceSites(); [pos,type=GT/AG]
+sub getBrokenSpliceSites
+{
+  my ($self)=@_;
+  my $status=$self->{essex}->findChild("status");
+  die "no status" unless $status;
+  die "empty status" unless $status->numElements()>0;
+  my $donors=$status->findChildren("broken-donor");
+  my $acceptors=$status->findChildren("broken-acceptor");
+  my $array=[];
+  foreach my $donor (@$donors)
+    { push @$array,[$donor->getIthElem(0),"GT"] }
+  foreach my $acceptor (@$acceptors)
+    { push @$array,[$acceptor->getIthElem(0),"AG"] }
+  return $array;
 }
 #---------------------------------------------------------------------
 #   $bool=$fbiReport->proteinDiffers();
@@ -357,10 +376,10 @@ sub allExonSkippingLOF
   my $refIsCoding=$self->refIsCoding();
   my $transcripts=$alts->findDescendents("transcript");
   foreach my $transcript (@$transcripts) {
-    my $array=$transcript->findDescendents("fate");
-    die "no fate" unless @$array>0;
-    my $fate=$array->[0];
-    die "empty fate" unless $fate && $fate->numElements()>0;
+    next unless 
+      $transcript->getAttribute("structure-change") eq "exon-skipping";
+    my $fate=$transcript->findDescendent("fate");
+    die "no fate" unless $fate && $fate->numElements()>0;
     my $string=$fate->getIthElem(0);
     my $LOF=0;
     if($string eq "NMD") { $LOF=1 }
@@ -374,6 +393,26 @@ sub allExonSkippingLOF
       if($percent<$self->{minPercentMatch}) { $LOF=1 }
     }
     if(!$LOF) { return 0 }
+  }
+  return 1;
+}
+#---------------------------------------------------------------------
+#   $bool=$fbiReport->allExonSkippingNMD(); # assumes status=splicing-changes,
+sub allExonSkippingNMD
+{
+  my ($self)=@_;
+  my $alts=$self->{essex}->findDescendents("alternate-structures");
+  die "no alternate-structures" unless @$alts>0;
+  $alts=$alts->[0];
+  my $refIsCoding=$self->refIsCoding();
+  my $transcripts=$alts->findDescendents("transcript");
+  foreach my $transcript (@$transcripts) {
+    next unless
+      $transcript->getAttribute("structure-change") eq "exon-skipping";
+    my $fate=$transcript->findDescendent("fate");
+    die "no fate" unless $fate && $fate->numElements()>0;
+    my $string=$fate->getIthElem(0);
+    if($string ne "NMD") { return 0 }
   }
   return 1;
 }
