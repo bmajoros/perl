@@ -68,7 +68,7 @@ sub writeScripts {
     my $id=$i+1;
     my $filename="$scriptDir/$filestem$id.slurm";
     open(OUT,">$filename") || die $filename;
-    print OUT "#!/bin/bash
+    print OUT "#!/bin/tcsh
 #
 #SBATCH -J $filestem$id
 #SBATCH -o $filestem$id.output

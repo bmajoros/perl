@@ -122,6 +122,7 @@ sub new
        begin=>$essex->getAttribute("begin"),
        end=>$essex->getAttribute("end"),
        geneId=>$essex->getAttribute("gene"),
+       substrate=>$essex->getAttribute("substrate"),
        exons=>[],
        UTR=>[],
        stopCodons=>{TAG=>1,TGA=>1,TAA=>1},
