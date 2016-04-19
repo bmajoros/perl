@@ -134,12 +134,15 @@ sub getRefTranscript
 sub getAltTranscripts
 {
   my ($self)=@_;
-  my $altElem=$self->{essex}->findDescendents("alternate-structures");
+  my $altElem=$self->{essex}->findDescendent("alternate-structures");
   my $array=[];
   if($altElem) {
     my $children=$altElem->findChildren("transcript");
     foreach my $child (@$children) {
-      push @$array,new Transcript($child);
+      my $transcript=new Transcript($child);
+      my $change=$child->getAttribute("structure-change");
+      $transcript->{structureChange}=$change;
+      push @$array,$transcript;
     }
   }
   return $array;
