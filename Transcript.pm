@@ -238,10 +238,9 @@ sub shiftCoords
   {
     my ($self,$delta)=@_;
     my $exons=$self->{exons};
-    foreach my $exon (@$exons)
-      {
-	$exon->shiftCoords($delta);
-      }
+    foreach my $exon (@$exons) { $exon->shiftCoords($delta) }
+    my $UTR=$self->{UTR};
+    foreach my $utr (@$UTR) { $utr->shiftCoords($delta) }
     $self->{begin}+=$delta;
     $self->{end}+=$delta;
   }
@@ -1126,7 +1125,7 @@ sub parseRawExons
 {
   my ($self)=@_;
   my $rawExons=$self->{rawExons};
-  my $numRaw=@$rawExons;
+  my $numRaw=$rawExons ? @$rawExons : 0;
   if($numRaw==0) { return }
   my $CDS=$self->{exons};
   my $strand=$self->{strand};

@@ -330,6 +330,7 @@ sub loadGFF
     close(GFF);
     my $transcripts=[];
     @$transcripts=values %transcripts;
+    foreach my $transcript (@$transcripts) { $transcript->parseRawExons() }
     adjustStartCodons($transcripts);
     computeFrames($transcripts);
     undef %transcripts;
