@@ -103,7 +103,7 @@ sub addTranscript
     my $hash=$self->{transcriptHash};
     if(defined($hash->{$id})) { return }
     push @{$self->{transcripts}},$transcript;
-    $hash->{$id}=$ranscript;
+    $hash->{$id}=$transcript;
   }
 #---------------------------------------------------------------------
 #   $n=$gene->getNumTranscripts();
