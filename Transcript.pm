@@ -1137,8 +1137,9 @@ sub parseRawExons
       my $begin=$exon->getBegin(); my $end=$exon->getEnd();
       if($begin<$cdsBegin) {
 	if($end<=$cdsBegin) {
-	  $exon->setType("five_prime_UTR");
-	  push @$UTR,$exon;
+	  my $newExon=$exon->copy();
+	  $newExon->setType("five_prime_UTR");
+	  push @$UTR,$newExon;
 	}
 	else {
 	  my $newExon=$exon->copy();
@@ -1149,8 +1150,9 @@ sub parseRawExons
       }
       if($end>$cdsEnd) {
 	if($begin>=$cdsEnd) {
-	  $exon->setType("three_prime_UTR");
-	  push @$UTR,$exon;
+	  my $newExon=$exon->copy();
+	  $newExon->setType("three_prime_UTR");
+	  push @$UTR,$newExon;
 	}
 	else {
 	  my $newExon=$exon->copy();
