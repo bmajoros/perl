@@ -1131,6 +1131,10 @@ sub parseRawExons
   my $strand=$self->{strand};
   $self->sortExons(); # also sorts rawExons
   my ($cdsBegin,$cdsEnd)=$self->getCDSbeginEnd();
+  if($cdsBegin<0) { # noncoding gene
+    if(!defined($CDS) || @$CDS==0) { $self->{exons}=$rawExons }
+    return;
+  }
   my $UTR=[];
   if($strand eq "+") {
     foreach my $exon (@$rawExons) {
@@ -1203,7 +1207,7 @@ sub getCDSbeginEnd
   my ($self)=@_;
   my $CDS=$self->{exons};
   my $numCDS=@$CDS;
-  die "no CDS elements in Transcript::getCDSbeginEnd()\n" unless $numCDS;
+  if($numCDS==0) { return (-1,-1) }
   my $strand=$self->{strand};
   if($strand eq "+") {
     my $begin=$CDS->[0]->getBegin();
