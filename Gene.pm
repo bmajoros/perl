@@ -8,6 +8,7 @@ use strict;
 # Attributes:
 #   transcripts : list of Transcript objects
 #   ID
+#   transcriptHash : transcripts hashed by their ID
 # Methods:
 #   $gene=new Gene();
 #   $gene->addTranscript($t);
@@ -34,7 +35,11 @@ sub new
   my ($class)=@_;
 
   my $transcripts=[];
-  my $self={transcripts=>$transcripts};
+  my $self=
+    {
+     transcripts=>$transcripts,
+     transcriptHash=>{}
+    };
   bless $self,$class;
 
   return $self;
@@ -93,8 +98,12 @@ sub getEnd
 #   $gene->addTranscript($t);
 sub addTranscript
   {
-    my ($self,$t)=@_;
-    push @{$self->{transcripts}},$t;
+    my ($self,$transcript)=@_;
+    my $id=$transcript->getTranscriptId();
+    my $hash=$self->{transcriptHash};
+    if(defined($hash->{$id})) { return }
+    push @{$self->{transcripts}},$transcript;
+    $hash->{$id}=$ranscript;
   }
 #---------------------------------------------------------------------
 #   $n=$gene->getNumTranscripts();

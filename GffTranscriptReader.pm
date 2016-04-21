@@ -88,7 +88,8 @@ sub loadGFF
 	next unless $_=~/\S+/;
 	next if $_=~/^\s*\#/;
 	my @fields=split/\s+/,$_;
-	if($fields[2] eq "gene" || $fields[2] eq "transcript") {
+	#if($fields[2] eq "gene" || $fields[2] eq "transcript") {
+	if($fields[2] eq "transcript") {
 	  my $begin=$fields[3]-1;
 	  my $end=$fields[4];
 	  if($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/) {
@@ -172,10 +173,58 @@ sub loadGFF
 	    $exon->{type}=$fields[2];
 	    push @{$transcript->{UTR}},$exon; # OK -- we sort later
 	  }
-	  if($transcript->numExons()+$transcript->numUTR())
-	    {$gene->addTranscript($transcript)}
+	  #if($transcript->numExons()+$transcript->numUTR()==1) {$gene->addTranscript($transcript)}
+	  $gene->addTranscript($transcript);
 	}
-	elsif($fields[2]=~/exon/ || $fields[2]=~/CDS/) {
+	elsif($fields[2] eq "exon") {
+	  my $exonBegin=$fields[3]-1;
+	  my $exonEnd=$fields[4];
+	  my $exonScore=$fields[5];
+	  my $strand=$fields[6];
+	  my $frame=$fields[7];
+	  my $transcriptId;
+	  if($_=~/transgrp[:=]\s*(\S+)/) {$transcriptId=$1}
+	  elsif($_=~/transcript_id[:=]?\s*\"?([^\s\";]+)\"?/){$transcriptId=$1}
+	  elsif($_=~/Parent=([^;,\s]+)/) {$transcriptId=$1}
+	  my $geneId;
+	  if(/genegrp=(\S+)/) {$geneId=$1}
+	  elsif(/gene_id[:=]?\s*\"?([^\s\;"]+)\"?/) {$geneId=$1}
+	  if(!defined($transcriptId)) {$transcriptId=$geneId}
+	  if(!defined($geneId)) {$geneId=$transcriptId}
+	  chop $transcriptId if $transcriptId=~/;$/;
+	  chop $geneId if $geneId=~/;$/;
+	  my $extra;
+	  for(my $i=8;$i<@fields;++$i){$extra.=$fields[$i]." "}
+	  if($exonBegin>$exonEnd)
+	    {($exonBegin,$exonEnd)=($exonEnd,$exonBegin)}
+	  my $transcript=$transcripts{$transcriptId};
+	  if(!defined $transcript) {
+	    $transcripts{$transcriptId}=$transcript=
+	      new Transcript($transcriptId,$strand);
+	    $transcript->setStopCodons($self->{stopCodons});
+	    $transcript->{readOrder}=$readOrder++;
+	    $transcript->{substrate}=$fields[0];
+	    $transcript->{source}=$fields[1];
+	    if(defined($transcriptBeginEnd{$transcriptId})) {
+	      my ($begin,$end)=@{$transcriptBeginEnd{$transcriptId}};
+	      $transcript->setBegin($begin);
+	      $transcript->setEnd($end);
+	    }
+	  }
+	  $transcript->{geneId}=$geneId;
+	  my $gene=$genes{$geneId};
+	  if(!defined $gene)
+	    {$genes{$geneId}=$gene=new Gene(); $gene->setId($geneId)}
+	  $transcript->setGene($gene);
+	  my $exon=new Exon($exonBegin,$exonEnd,$transcript);
+	  $exon->{extraFields}=$extra;
+	  $exon->{score}=$exonScore;
+	  $exon->{type}=$fields[2];
+	  push @{$transcript->{rawExons}},$exon;
+	  #if($transcript->numExons()+$transcript->numUTR()) {$gene->addTranscript($transcript)} ### ?
+	  $gene->addTranscript($transcript);
+	}
+	elsif($fields[2]=~/CDS/ || $fields[2]=~/-exon/) {
 	  my $exonBegin=$fields[3]-1;
 	  my $exonEnd=$fields[4];
 	  my $exonScore=$fields[5];
@@ -226,8 +275,8 @@ sub loadGFF
 	    push @{$transcript->{exons}},$exon; # OK -- we sort later
 	    #$transcript->addExon($exon);       # <---too slow
 	  }
-	  if($transcript->numExons()+$transcript->numUTR()==1)
-	    {$gene->addTranscript($transcript)}
+	  #if($transcript->numExons()+$transcript->numUTR()==1) {$gene->addTranscript($transcript)} ### ?
+	  $gene->addTranscript($transcript);
 	}
 	elsif($_=~/translation\s+(\d+)\s+(\d+).*([\-\+]).*transgrp=(\S+)/ ||
 	      $_=~/translation\s+(\d+)\s+(\d+).*([\-\+]).*transcript_id:\s*\"?([^\s\"]+)\"?/) {

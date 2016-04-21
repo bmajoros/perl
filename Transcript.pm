@@ -24,8 +24,9 @@ use Carp;
 #   startCodonAbsolute : absolute coordinates of start codon, 
 #                        relative to genomic axis
 #   strand : + or -
-#   exons : pointer to array of Exons
+#   exons : pointer to array of Exons (which are actually CDS segments)
 #   UTR : pointer to array of UTR segments
+#   rawExons : point to array of exons (could be mix of CDS & UTR)
 #   begin : begin coordinate of leftmost exon (zero based)
 #   end : end coordinate of rightmost exon (one past end)
 #   sequence : NOT LOADED BY DEFAULT!
@@ -58,6 +59,8 @@ use Carp;
 #   $len=$transcript->getExtent(); # end-begin
 #   $n=$transcript->numExons();
 #   $n=$transcript->numUTR();
+#   ($begin,$end)=$transcript->getCDSbeginEnd(); # call sortExons() first!
+#                 ^ begin is always < end
 #   $exon=$transcript->getIthExon($i);
 #   $transcript->deleteExon($index);
 #   $transcript->deleteExonRef($exon);
@@ -96,6 +99,8 @@ use Carp;
 #   $hash=$transcript->hashExtraFields(\@keyValuePairs);
 #   $transcript->setExtraFieldsFromKeyValuePairs(\@array); # [key,value]
 #   $transcript->setExtraFields($string);
+#   $transcript->parseRawExons(); # infers UTR elements from exons (CDS) and
+#                                   rawExons
 # Private methods:
 #   $transcript->adjustOrders();
 #   $transcript->sortExons();
@@ -409,11 +414,17 @@ sub sortExons
       @{$self->{exons}}=sort {$a->{begin}<=>$b->{begin}} @{$self->{exons}};
       if($self->{UTR})
 	{@{$self->{UTR}}=sort {$a->{begin}<=>$b->{begin}} @{$self->{UTR}}}
+      if($self->{rawExons})
+	{@{$self->{rawExons}}=sort {$a->{begin}<=>$b->{begin}}
+	   @{$self->{rawExons}}}
     }
     else {
       @{$self->{exons}}=sort {$b->{begin}<=>$a->{begin}} @{$self->{exons}};
       if($self->{UTR})
 	{@{$self->{UTR}}=sort {$b->{begin}<=>$a->{begin}} @{$self->{UTR}}}
+      if($self->{rawExons})
+	{@{$self->{rawExons}}=sort {$b->{begin}<=>$a->{begin}}
+	   @{$self->{rawExons}}}
     }
   }
 #---------------------------------------------------------------------
@@ -1110,7 +1121,98 @@ sub hashExtraFields
   return $hash;
 }
 #---------------------------------------------------------------------
+#   $transcript->parseRawExons();
+sub parseRawExons
+{
+  my ($self)=@_;
+  my $rawExons=$self->{rawExons};
+  my $numRaw=@$rawExons;
+  if($numRaw==0) { return }
+  my $CDS=$self->{exons};
+  my $strand=$self->{strand};
+  $self->sortExons(); # also sorts rawExons
+  my ($cdsBegin,$cdsEnd)=$self->getCDSbeginEnd();
+  my $UTR=[];
+  if($strand eq "+") {
+    foreach my $exon (@$rawExons) {
+      my $begin=$exon->getBegin(); my $end=$exon->getEnd();
+      if($begin<$cdsBegin) {
+	if($end<=$cdsBegin) {
+	  $exon->setType("five_prime_UTR");
+	  push @$UTR,$exon;
+	}
+	else {
+	  my $newExon=$exon->copy();
+	  $newExon->setEnd($cdsBegin);
+	  $newExon->setType("five_prime_UTR");
+	  push @$UTR,$newExon;
+	}
+      }
+      if($end>$cdsEnd) {
+	if($begin>=$cdsEnd) {
+	  $exon->setType("three_prime_UTR");
+	  push @$UTR,$exon;
+	}
+	else {
+	  my $newExon=$exon->copy();
+	  $newExon->setBegin($cdsEnd);
+	  $newExon->setType("three_prime_UTR");
+	  push @$UTR,$newExon;
+	}
+      }
+    }
+  }
+  else { # strand eq "-"
+    foreach my $exon (@$rawExons) {
+      my $begin=$exon->getBegin(); my $end=$exon->getEnd();
+      if($begin<$cdsBegin) {
+	if($end<=$cdsBegin) {
+	  $exon->setType("three_prime_UTR");
+	  push @$UTR,$exon;
+	}
+	else {
+	  my $newExon=$exon->copy();
+	  $newExon->setEnd($cdsBegin);
+	  $newExon->setType("three_prime_UTR");
+	  push @$UTR,$newExon;
+	}
+      }
+      if($end>$cdsEnd) {
+	if($begin>=$cdsEnd) {
+	  $exon->setType("five_prime_UTR");
+	  push @$UTR,$exon;
+	}
+	else {
+	  my $newExon=$exon->copy();
+	  $newExon->setBegin($cdsEnd);
+	  $newExon->setType("five_prime_UTR");
+	  push @$UTR,$newExon;
+	}
+      }
+    }
+  }
+  $self->{UTR}=$UTR;
+}
 #---------------------------------------------------------------------
+# ($begin,$end)=$transcript->getCDSbeginEnd(); # call sortExons() first!
+sub getCDSbeginEnd
+{
+  my ($self)=@_;
+  my $CDS=$self->{exons};
+  my $numCDS=@$CDS;
+  die "no CDS elements in Transcript::getCDSbeginEnd()\n" unless $numCDS;
+  my $strand=$self->{strand};
+  if($strand eq "+") {
+    my $begin=$CDS->[0]->getBegin();
+    my $end=$CDS->[$numCDS-1]->getEnd();
+    return ($begin,$end);
+  }
+  else { # strand eq "-"
+    my $begin=$CDS->[$numCDS-1]->getBegin();
+    my $end=$CDS->[0]->getEnd();
+    return ($begin,$end);
+  }
+}
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 
