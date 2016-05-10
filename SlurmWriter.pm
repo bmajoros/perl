@@ -14,12 +14,14 @@ use strict;
 #   commands : array of string
 #   nice : empty, or integer (nice value)
 #   mem : empty, or integer (mem value, in megabytes)
+#   queue : partition name
 # Methods:
 #   $writer=new SlurmWriter();
 #   $writer->addCommand($cmd);
 #   $writer->nice(); # turns on "nice" (sets it to 100 by default)
 #   $writer->mem(1500);
-#   $writer->writeScripts($numScripts,$scriptDir,$filestem,
+#   $writer->setQueue("new,all");
+#   $writer->writeScripts($numScripts,$scriptDir,$jobName,
 #               $baseDir,$additional_SBATCH_lines);
 ######################################################################
 
@@ -45,7 +47,8 @@ sub addCommand
 #   $writer->writeScripts($numScripts,$scriptDir,$filestem,
 #               $baseDir,$additional_SBATCH_lines);
 sub writeScripts {
-  my ($this,$numScripts,$scriptDir,$filestem,$baseDir,$moreSBATCH)
+  my ($this,$numScripts,$scriptDir,$filestem,$baseDir,$moreSBATCH,
+      $queue)
     =@_;
   chomp $moreSBATCH;
   if($this->{niceValue}>0) 
@@ -54,6 +57,10 @@ sub writeScripts {
     { $moreSBATCH.="#SBATCH --mem=".$this->{memValue}."\n" }
   if(length($moreSBATCH)>0) {
     unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" }
+  }
+  if(length($this->{queue})>0) {
+    $queue=$this->{queue};
+    $queue="#SBATCH -p $queue\n";
   }
   if(-e $scriptDir) { system("rm -f $scriptDir/*.{slurm,output}") }
   system("mkdir -p $scriptDir");
@@ -66,7 +73,7 @@ sub writeScripts {
     my $end=int(($i+1)*$commandsPerJob);
     if($i==$numScripts-1) { $end=$numCommands }
     my $id=$i+1;
-    my $filename="$scriptDir/$filestem$id.slurm";
+    my $filename="$scriptDir/$id.slurm";
     open(OUT,">$filename") || die $filename;
     print OUT "#!/bin/tcsh
 #
@@ -74,6 +81,7 @@ sub writeScripts {
 #SBATCH -o $filestem$id.output
 #SBATCH -e $filestem$id.output
 #SBATCH -A $filestem$id
+$queue
 $moreSBATCH#
 cd $baseDir
 ";
@@ -83,6 +91,13 @@ cd $baseDir
     }
     close(OUT);
   }
+}
+#---------------------------------------------------------------------
+#   $writer->setQueue("new,all");
+sub setQueue
+{
+  my ($self,$queue)=@_;
+  $self->{queue}=$queue;
 }
 #---------------------------------------------------------------------
 #   $writer->nice();

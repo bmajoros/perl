@@ -30,7 +30,7 @@ use strict;
 #   $string=$node->getAttribute($attributeTag);
 #   $array=$node->getElements();
 #   $bool=EssexNode::isaNode($datum);
-#   $bool=$node->hasCompositeChildren;
+#   $bool=$node->hasCompositeChildren();
 #   $node->print($filehandle);
 #   $node->recurse($visitor); # must have methods enter(node) and leave(node)
 #   $array=$node->query($query); # e.g., "book/chapter/section/page>34"
