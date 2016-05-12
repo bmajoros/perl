@@ -101,6 +101,7 @@ use Carp;
 #   $transcript->setExtraFields($string);
 #   $transcript->parseRawExons(); # infers UTR elements from exons (CDS) and
 #                                   rawExons
+#   $transcript->becomeNoncoding(); enforces all exons to be UTR
 # Private methods:
 #   $transcript->adjustOrders();
 #   $transcript->sortExons();
@@ -1221,6 +1222,30 @@ sub getCDSbeginEnd
   }
 }
 #---------------------------------------------------------------------
+#   $transcript->becomeNoncoding(); enforces all exons to be UTR
+sub becomeNoncoding
+{
+  my ($self)=@_;
+  my $exons=$self->{exons};
+  my $UTR=$self->{UTR};
+  my $raw=$self->{rawExons};
+  my $combined=[];
+  if($exons) { foreach my $exon (@$exons) {push @$combined,$exon} }
+  if($UTR)   { foreach my $exon (@$UTR)   {push @$combined,$exon} }
+  if($raw)   { foreach my $exon (@$raw)   {push @$combined,$exon} }
+  @$combined=sort {$a->getBegin() <=> $b->getBegin()} @$combined;
+  my $n=@$combined;
+  for(my $i=0 ; $i<$n-1 ; ++$i) {
+    my $this=$combined->[$i]; my $next=$combined->[$i+1];
+    if($this->getEnd()>=$next->getBegin()) {
+      if($this->getEnd()<$next->getEnd()) { $this->setEnd($next->getEnd()) }
+      splice(@$combined,$i+1,1);
+    }
+  }
+  $self->{exons}=undef;
+  $self->{rawExons}=undef;
+  $self->{UTR}=$combined;
+}
 #---------------------------------------------------------------------
 
 
