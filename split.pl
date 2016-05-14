@@ -9,18 +9,18 @@ my ($infile,$filestem,$numParts)=@ARGV;
 my @array;
 open(IN,$infile) || die "can't read file $infile\n";
 while(<IN>) {
-  next unless($_=/\S/);
+  next unless($_=~/\S/);
   push @array,$_;
 }
 close(IN);
 
 my $N=@array;
-my $binSize=$@array/$numParts;
+my $binSize=@array/$numParts;
 my $boundary=$binSize;
 my $fileNum=1;
 for(my $i=0 ; $i<$N ; ) {
   my $end=$i+int($binSize+5/9);
-  my $filename="$filestem.$fileNum";
+  my $filename="$filestem-$fileNum.txt";
   ++$fileNum;
   open(OUT,">$filename") || die "can't write to file $filename\n";
   for(my $j=$i ; $j<$end ; ++$j) {
@@ -28,4 +28,5 @@ for(my $i=0 ; $i<$N ; ) {
     print OUT $line;
   }
   close(OUT);
+  $i=$end;
 }
