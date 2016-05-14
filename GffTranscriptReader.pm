@@ -171,6 +171,7 @@ sub loadGFF
 	    $exon->{frame}=$frame;
 	    $exon->{score}=$exonScore;
 	    $exon->{type}=$fields[2];
+	    #print "setting utr type to " . $exon->getType() . "\n";
 	    push @{$transcript->{UTR}},$exon; # OK -- we sort later
 	  }
 	  #if($transcript->numExons()+$transcript->numUTR()==1) {$gene->addTranscript($transcript)}
@@ -272,6 +273,7 @@ sub loadGFF
 	    $exon->{frame}=$frame;
 	    $exon->{score}=$exonScore;
 	    $exon->{type}=$fields[2];
+	    #print "setting exon type: \"" . $exon->getType() . "\"\n";
 	    push @{$transcript->{exons}},$exon; # OK -- we sort later
 	    #$transcript->addExon($exon);       # <---too slow
 	  }

@@ -43,6 +43,7 @@ use Carp;
 #   $copy=$transcript->copy();
 #   $bool=$transcript->areExonTypesSet();
 #   $transcript->setExonTypes(); # initial-exon, internal-exon, etc...
+#   $transcript->setUTRtypes(); # this is called by setExonTypes()
 #   $transcript->setExonTypes("exon");
 #   $success=$transcript->loadExonSequences(\$axisSequence);
 #   $seq=$transcript->loadTranscriptSeq(\$axisSequence);
@@ -470,6 +471,7 @@ sub areExonTypesSet
 sub setExonTypes
 {
   my ($self,$defaultType)=@_;
+  setUTRtypes();
   my $exons=$self->{exons};
   my $numExons=@$exons;
   if(length($defaultType)>0) {
@@ -492,6 +494,39 @@ sub setExonTypes
       }
     $exons->[0]->setType("initial-exon");
     $exons->[$numExons-1]->setType("final-exon");
+  }
+}
+#---------------------------------------------------------------------
+#   $transcript->setUTRtypes();
+sub setUTRtypes
+{
+  my ($self)=@_;
+  if($self->numExons()==0) {
+    my $UTR=$self->{UTR};
+    foreach my $utr (@$UTR) { $utr->setType("UTR") }
+    return;
+  }
+  $self->sortExons();
+  my ($CDSbegin,$CDSend)=$self->getCDSbeginEnd();;
+  my $UTR=$self->{utr};
+  my $numutr=@$UTR;
+  my %validExonTypes=
+    %{{"five_prime_UTR"=>1,
+	 "three_prime_UTR"=>1}};
+  my $strand=$self->getStrand();
+  if($strand eq "+") {
+    foreach my $utr (@$UTR) {
+      my $begin=$utr->getBegin();
+      if($begin<$CDSbegin) { $utr->setType("five_prime_UTR") }
+      else { $utr->setType("three_prime_UTR") }
+    }
+  }
+  else {
+    foreach my $utr (@$UTR) {
+      my $begin=$utr->getBegin();
+      if($begin>$CDSbegin) { $utr->setType("five_prime_UTR") }
+      else { $utr->setType("three_prime_UTR") }
+    }
   }
 }
 #---------------------------------------------------------------------
@@ -582,7 +617,7 @@ sub toGff
       $extraFields.="$key=$value;";
     }
     my $exons=$self->{exons};
-    my $numExons=@$exons;
+    my $numExons=$exons ? @$exons : 0;
     my $gff;
     my $begin=$self->{begin}; my $end=$self->{end};
     if(defined($begin)) {
@@ -598,7 +633,7 @@ sub toGff
       $gff.=$exonGff;
     }
     my $UTR=$self->{UTR};
-    my $numUTR=@$UTR;
+    my $numUTR=$UTR ? @$UTR : 0;
     for(my $i=0 ; $i<$numUTR ; ++$i) {
       my $exon=$UTR->[$i];
       my $exonGff=$exon->toGff();
@@ -1240,8 +1275,14 @@ sub becomeNoncoding
     if($this->getEnd()>=$next->getBegin()) {
       if($this->getEnd()<$next->getEnd()) { $this->setEnd($next->getEnd()) }
       splice(@$combined,$i+1,1);
+      --$n;
+      --$i;
     }
   }
+  foreach my $exon (@$combined) { $exon->setType("UTR") }
+#  foreach my $exon (@$combined) { print $exon->{type} . "\n"}
+  $n=@$combined;
+#  for(my $i=0 ; $i<$n ; ++$i) { $combined->[$i]->setType("UTR") }
   $self->{exons}=undef;
   $self->{rawExons}=undef;
   $self->{UTR}=$combined;
