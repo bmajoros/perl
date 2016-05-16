@@ -78,11 +78,10 @@ sub writeScripts {
     print OUT "#!/bin/tcsh
 #
 #SBATCH -J $filestem$id
-#SBATCH -o $filestem$id.output
-#SBATCH -e $filestem$id.output
+#SBATCH -o $scriptDir/$filestem$id.output
+#SBATCH -e $scriptDir/$filestem$id.output
 #SBATCH -A $filestem$id
-$queue
-$moreSBATCH#
+$queue$moreSBATCH#
 cd $baseDir
 ";
     for(my $j=$begin ; $j<$end ; ++$j) {
