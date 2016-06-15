@@ -21,8 +21,10 @@ use strict;
 #   $writer->nice(); # turns on "nice" (sets it to 100 by default)
 #   $writer->mem(1500);
 #   $writer->setQueue("new,all");
-#   $writer->writeScripts($numScripts,$scriptDir,$jobName,
-#               $baseDir,$additional_SBATCH_lines);
+#   $writer->writeScripts($numScripts,$scriptDir,$jobName,$runDir,$maxParallel,
+#                         $additional_SBATCH_lines);
+#   $writer->writeArrayScript($slurmDir,$jobName,$runDir,$maxParallel,
+#                             $additional_SBATCH_lines);
 ######################################################################
 
 
@@ -47,9 +49,7 @@ sub addCommand
 #   $writer->writeScripts($numScripts,$scriptDir,$filestem,
 #               $baseDir,$additional_SBATCH_lines);
 sub writeScripts {
-  my ($this,$numScripts,$scriptDir,$filestem,$baseDir,$moreSBATCH,
-      $queue)
-    =@_;
+  my ($this,$numScripts,$scriptDir,$filestem,$baseDir,$moreSBATCH)=@_;
   chomp $moreSBATCH;
   if($this->{niceValue}>0) 
     { $moreSBATCH.="#SBATCH --nice=".$this->{niceValue}."\n" }
@@ -58,6 +58,7 @@ sub writeScripts {
   if(length($moreSBATCH)>0) {
     unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" }
   }
+  my $queue;
   if(length($this->{queue})>0) {
     $queue=$this->{queue};
     $queue="#SBATCH -p $queue\n";
@@ -112,6 +113,53 @@ sub mem {
   $this->{memValue}=$value;
 }
 #---------------------------------------------------------------------
+#   $writer->writeArrayScript($slurmDir,$jobName,$runDir,$maxParallel,
+#                             $additional_SBATCH_lines);
+sub writeArrayScript {
+  my ($this,$slurmDir,$jobName,$runDir,$maxParallel,$moreSBATCH)=@_;
+  die "specify maxParallel parameter" unless $maxParallel>0;
+  chomp $moreSBATCH;
+  if($this->{niceValue}>0) 
+    { $moreSBATCH.="#SBATCH --nice=".$this->{niceValue}."\n" }
+  if($this->{memValue}>0) 
+    { $moreSBATCH.="#SBATCH --mem=".$this->{memValue}."\n" }
+  if(length($moreSBATCH)>0) {
+    unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" } }
+  my $queue;
+  if(length($this->{queue})>0) {
+    $queue=$this->{queue};
+    $queue="#SBATCH -p $queue\n"; }
+  if(-e $slurmDir)
+    { system("rm -f $slurmDir/*.slurm $slurmDir/outputs/*.output") }
+  system("mkdir -p $slurmDir/outputs");
+  my $commands=$this->{commands};
+  my $numCommands=@$commands;
+  my $numJobs=$numCommands;
+  my $TCSH=`which tcsh`; chomp $TCSH;
+  for(my $i=0 ; $i<$numCommands ; ++$i) {
+    my $command=$commands->[$i];
+    my $index=$i+1;
+    my $filename="$slurmDir/command$index.sh";
+    open(OUT,">$filename") || die $filename;
+    print OUT "#!$TCSH\n";
+    print OUT "$command\n";
+    close(OUT);
+    system("chmod +x $filename");
+  }
+  my $filename="$slurmDir/array.slurm";
+  open(OUT,">$filename") || die $filename;
+  print OUT "#!/bin/tcsh
+#
+#SBATCH -J $jobName
+#SBATCH -o $slurmDir/outputs/\%a.output
+#SBATCH -e $slurmDir/outputs/\%a.output
+#SBATCH -A $jobName
+#SBATCH --array=1-$numJobs\%$maxParallel
+$queue$moreSBATCH#
+$slurmDir/command\${SLURM_ARRAY_TASK_ID}.sh
+";
+  close(OUT);
+}
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------

@@ -48,6 +48,7 @@ sub open
   {
     my ($self,$filename)=@_;
     if($self->{isOpen}) {$self->close()}
+    die "Can't open file: $filename\n" unless -e $filename;
     my $file=$self->{file}=new FileHandle($filename);
     $self->{isOpen}=1;
     $self->{scanner}=new EssexScanner($file);

@@ -75,6 +75,7 @@ sub new
      end=>$end,
      transcript=>$transcript,
      score=>".",
+     type=>"exon",
      strand=>$transcript ? $transcript->getStrand() : undef
     };
   bless $self,$class;
@@ -231,7 +232,7 @@ sub toGff
     my $transcriptId=($transcript ? $transcript->getID() : ".");
     my $geneId=($transcript ? $transcript->getGeneId() : ".");
     #my $gff="$substrate\t$source\t$type\t$begin\t$end\t$score\t$strand\t$frame\ttranscript_id \"$transcriptId\"; gene_id \"$geneId\";\n";
-    my $gff="$substrate\t$source\t$type\t$begin\t$end\t$score\t$strand\t$frame\ttranscript_id=$transcriptId;gene_id=$geneId;\n";
+    my $gff="$substrate\t$source\t$type\t$begin\t$end\t$score\t$strand\t$frame\ttranscript_id \"$transcriptId\"; gene_id \"$geneId\"\n";
     return $gff;
   }
 #---------------------------------------------------------------------

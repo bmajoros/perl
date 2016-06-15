@@ -36,6 +36,7 @@ sub recurse {
       $schema{$tag}->{$child->getTag()}=1;
       recurse($child);
     }
+#    else { $schema{$tag}->{$child}=1 }
   }
 }
 

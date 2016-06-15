@@ -22,7 +22,7 @@ while(<IN>) {
     my $value=$data[$i];
     my $L=length($key);
     for(my $i=$L ; $i<20 ; ++$i) { $key.=" " }
-    print "$key   $value\n";
+    if($value ne "") { print "$key   $value\n" }
   }
 }
 close(IN);

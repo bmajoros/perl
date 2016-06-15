@@ -625,7 +625,9 @@ sub toGff
       my $substrate=$self->{substrate};
       my $source=$self->{source};
       my $strand=$self->{strand};
-      $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t.\t$strand\t.\ttranscript_id=$transID;gene_id=$geneID;$extraFields\n";
+      my $extra;
+      if($extraFields=~/\S/) {$extra="; $extraFields"}
+      $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t.\t$strand\t.\ttranscript_id \"$transID\"; gene_id \"$geneID\"$extra\n";
     }
     for(my $i=0 ; $i<$numExons ; ++$i) {
       my $exon=$exons->[$i];

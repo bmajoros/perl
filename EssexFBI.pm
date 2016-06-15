@@ -22,11 +22,10 @@ use Transcript;
 #   $vcfWarnings=$fbiReport->getNumVcfWarnings();
 #   $vcfErrors=$fbiReport->getNumVcfErrors();
 #   $cigar=$fbiReport->getCigar();
-#   $defline=$fbiReport->getDefline();
 #   $transcript=$fbiReport->getRefTranscript();
 #   $transcript=$fbiReport->getMappedTranscript();
 #   $statusString=$fbiReport->getStatusString();
-#             status=mapped/splicing-changes/no-transcript
+#     status = mapped/splicing-changes/no-transcript/bad-annotation
 #   $bool=$fbiReport->hasBrokenSpliceSite();
 #   $array=$report->getBrokenSpliceSites(); [pos,type=GT/AG]
 #   $array=$fbiReport->getAltTranscripts();
