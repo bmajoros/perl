@@ -152,8 +152,8 @@ sub getMappedTranscript
 {
   my ($self)=@_;
   my $trans=$self->{essex}->findChild("mapped-transcript");
-  die "no mapped transcript" unless $trans;
-  return new Transcript($trans);
+  #die "no mapped transcript" unless $trans;
+  return $trans ? new Transcript($trans) : undef;
 }
 #---------------------------------------------------------------------
 #   $statusString=$fbiReport->getStatusString();
