@@ -58,11 +58,13 @@ use Carp;
 #   $bool=$transcript->exonOverlapsExon($exon);
 #   $len=$transcript->getLength(); # sum of exon sizes
 #   $len=$transcript->getExtent(); # end-begin
-#   $n=$transcript->numExons();
-#   $n=$transcript->numUTR();
 #   ($begin,$end)=$transcript->getCDSbeginEnd(); # call sortExons() first!
 #                 ^ begin is always < end
+#   $n=$transcript->numExons();
 #   $exon=$transcript->getIthExon($i);
+#   $n=$transcript->numUTR();
+#   $utr=$transcript->getIthUTR($i);
+#   $len=$transcript->totalUTRlen();
 #   $transcript->deleteExon($index);
 #   $transcript->deleteExonRef($exon);
 #   $transcript->recomputeBoundaries();# for after trimming 1st & last exons
@@ -396,6 +398,23 @@ sub getIthExon
   {
     my ($self,$i)=@_;
     return $self->{exons}->[$i];
+  }
+#---------------------------------------------------------------------
+#   $exon=$transcript->getIthUTR($i);
+sub getIthUTR
+  {
+    my ($self,$i)=@_;
+    return $self->{UTR}->[$i];
+  }
+#---------------------------------------------------------------------
+#   $len=$transcript->totalUTRlen();
+sub totalUTRlen
+  {
+    my ($self,$i)=@_;
+    my $UTR=$self->{UTR};
+    my $len=0;
+    foreach my $utr (@$UTR) { $len+=$utr->getLength() }
+    return $len;
   }
 #---------------------------------------------------------------------
 #   $transcript->deleteExon($i);

@@ -33,6 +33,7 @@ use strict;
 #   $bool=$node->hasCompositeChildren();
 #   $node->print($filehandle);
 #   $node->recurse($visitor); # must have methods enter(node) and leave(node)
+#   $array=$node->pathQuery("report/reference-transcript/type");
 #   $array=$node->query($query); # e.g., "book/chapter/section/page>34"
 #                                # operators: >,>=,<,<=,=,!=,~
 #                                # "~" means "contains substring"
@@ -199,36 +200,61 @@ sub query
     my $rootTag=shift @fields;
     my $lastTagIndex=@fields-1;
     my $lastTag=$fields[$lastTagIndex];
-    $lastTag=~/(\S+)([><=!~]+)(\S+)/ || 
-      die "Syntax error in Essex query near \"$lastTag\"\n";
-    $fields[$lastTagIndex]=$lastTag=$1;
-    my $operator=$2;
-    my $testValue=$3;
-    my $depth=@fields;
-    my $candidates;
-    if($self->getTag() eq $rootTag) { $candidates=[$self] }
-    else { $candidates=$self->findDescendents($rootTag) }
-    my $n=@$candidates;
-    my $hits=[];
-    for(my $i=0 ; $i<$n ; ++$i) {
-      my $candidate=$candidates->[$i];
-      my $attr=$candidate;
-      for(my $j=0 ; $j<$depth ; ++$j) {
-	$attr=$attr->findChild($fields[$j]);
-	if(!defined($attr)) {return $hits}
+    if($lastTag=~/(\S+)([><=!~]+)(\S+)/) {
+      $fields[$lastTagIndex]=$lastTag=$1;
+      my $operator=$2;
+      my $testValue=$3;
+      my $depth=@fields;
+      my $candidates;
+      if($self->getTag() eq $rootTag) { $candidates=[$self] }
+      else { $candidates=$self->findDescendents($rootTag) }
+      my $n=@$candidates;
+      my $hits=[];
+      for(my $i=0 ; $i<$n ; ++$i) {
+	my $candidate=$candidates->[$i];
+	my $attr=$candidate;
+	for(my $j=0 ; $j<$depth ; ++$j) {
+	  $attr=$attr->findChild($fields[$j]);
+	  if(!defined($attr)) {return $hits}
+	}
+	if($attr->numElements()<1) {die "$lastTag has no value\n"}
+	my $value=$attr->getIthElem(0);
+	my $result;
+	if($operator eq "~") {$result=($value=~/$testValue/)}
+	else {
+	  my $test="$value$operator$testValue";
+	  $result=eval($test);
+	}
+	if($result) {push @$hits,$candidate}
       }
-      if($attr->numElements()<1) {die "$lastTag has no value\n"}
-      my $value=$attr->getIthElem(0);
-      my $result;
-      if($operator eq "~") {$result=($value=~/$testValue/)}
-      else {
-	my $test="$value$operator$testValue";
-	$result=eval($test);
-      }
-      if($result) {push @$hits,$candidate}
+      return $hits;
     }
-    return $hits;
+    else { return $self->pathQuery($query) }
   }
+#---------------------------------------------------------------------
+#   $array=$node->pathQuery($query); # e.g., "book/chapter/section"
+sub pathQuery
+{
+  my ($self,$query)=@_;
+  my @fields=split/\//,$query;
+  if(@fields<2) {die "Essex query must contain at least one '/'\n"}
+  my $rootTag=shift @fields;
+  my $depth=@fields;
+  my $candidates;
+  if($self->getTag() eq $rootTag) { $candidates=[$self] }
+  else { $candidates=$self->findDescendents($rootTag) }
+  my $n=@$candidates;
+  for(my $i=0 ; $i<$n ; ++$i) {
+    my $candidate=$candidates->[$i];
+    my $attr=$candidate;
+    for(my $j=0 ; $j<$depth ; ++$j) {
+      $attr=$attr->findChild($fields[$j]);
+      last unless defined($attr);
+    }
+    if(defined($attr)) { return $attr }
+  }
+  return undef;
+}
 #---------------------------------------------------------------------
 #   $node->recurse($visitor); # must have methods enter(node) and leave(node)
 sub recurse
