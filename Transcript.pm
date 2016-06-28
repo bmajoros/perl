@@ -528,7 +528,7 @@ sub setUTRtypes
   $self->sortExons();
   my ($CDSbegin,$CDSend)=$self->getCDSbeginEnd();;
   my $UTR=$self->{utr};
-  my $numutr=@$UTR;
+  my $numutr=$UTR ? @$UTR 0;
   my %validExonTypes=
     %{{"five_prime_UTR"=>1,
 	 "three_prime_UTR"=>1}};
