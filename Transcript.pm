@@ -490,7 +490,7 @@ sub areExonTypesSet
 sub setExonTypes
 {
   my ($self,$defaultType)=@_;
-  setUTRtypes();
+  $self->setUTRtypes();
   my $exons=$self->{exons};
   my $numExons=@$exons;
   if(length($defaultType)>0) {
