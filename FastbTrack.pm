@@ -17,6 +17,8 @@ use FastaWriter;
 #   $track=new FastbTrack($type,$id,$data,$deflineExtra); # $type="discrete" or "continuous"
 #   $type=$track->getType();
 #   $data=$track->getData();
+#   $track->setSequence($string); # discrete
+#   $track->setData(\@values);# continuous
 #   $id=$track->getID();
 #   $L=$track->getLength();
 #   $track->rename($newID);
@@ -147,6 +149,24 @@ sub slice {
   my $newTrack=new FastbTrack($self->{type},$self->{id},$data,$self->{deflineExtra});
   return $newTrack;
 }
+#---------------------------------------------------------------------
+#   $track->setSequence($string); # discrete
+sub setSequence
+{
+  my ($self,$string)=@_;
+  $self->{data}=$string;
+}
+#---------------------------------------------------------------------
+#   $track->setData(\@values);# continuous
+sub setData
+{
+  my ($self,$values)=@_;
+  $self->{data}=$values;
+}
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
 #---------------------------------------------------------------------
 
 
