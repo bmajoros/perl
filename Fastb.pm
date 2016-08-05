@@ -21,6 +21,7 @@ use FastbTrack;
 #   $fastb->addTrack($fastbTrack);
 #   $fastb->save($filename);
 #   $newFastb=$fastb->slice($begin,$end);
+#   $fastb->dropTrack($trackName);
 # Private:
 #   $fastb=new Fastb();
 #   load($filename);
@@ -116,6 +117,23 @@ sub slice {
   }
   return $newFastb;
 }
+#---------------------------------------------------------------------
+#   $fastb->dropTrack($trackName);
+sub dropTrack
+{
+  my ($self,$name)=@_;
+  my $n=$self->numTracks();
+  my $index;
+  for(my $i=0 ; $i<$n ; ++$i)
+    { if($self->getIthTrack($i)->getID() eq $name) { $index=$i; last } }
+  if(!defined($index)) { die "can't find track $name in Fastb.pm" }
+  splice(@{$self->{trackArray}},$index,1);
+  delete $self->{trackHash}->{$name};
+}
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
+#---------------------------------------------------------------------
 #---------------------------------------------------------------------
 
 

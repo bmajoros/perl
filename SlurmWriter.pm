@@ -15,11 +15,13 @@ use strict;
 #   nice : empty, or integer (nice value)
 #   mem : empty, or integer (mem value, in megabytes)
 #   queue : partition name
+#   threads : number of CPUs requested
 # Methods:
 #   $writer=new SlurmWriter();
 #   $writer->addCommand($cmd);
 #   $writer->nice(); # turns on "nice" (sets it to 100 by default)
 #   $writer->mem(1500);
+#   $writer->threads(16);
 #   $writer->setQueue("new,all");
 #   $writer->writeScripts($numScripts,$scriptDir,$jobName,$runDir,$maxParallel,
 #                         $additional_SBATCH_lines);
@@ -55,6 +57,8 @@ sub writeScripts {
     { $moreSBATCH.="#SBATCH --nice=".$this->{niceValue}."\n" }
   if($this->{memValue}>0) 
     { $moreSBATCH.="#SBATCH --mem=".$this->{memValue}."\n" }
+  if($this->{threads}>0)
+    { $moreSBATCH.="#SBATCH --cpus-per-task=".$this->{threads}."\n" }
   if(length($moreSBATCH)>0) {
     unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" }
   }
@@ -78,6 +82,7 @@ sub writeScripts {
     open(OUT,">$filename") || die $filename;
     print OUT "#!/bin/tcsh
 #
+#SBATCH --get-user-env
 #SBATCH -J $filestem$id
 #SBATCH -o $scriptDir/$filestem$id.output
 #SBATCH -e $scriptDir/$filestem$id.output
@@ -107,6 +112,12 @@ sub nice {
   $this->{niceValue}=$value;
 }
 #---------------------------------------------------------------------
+#   $writer->threads(16);
+sub threads {
+  my ($this,$value)=@_;
+  $this->{threads}=$value;
+}
+#---------------------------------------------------------------------
 #   $writer->mem(1500);
 sub mem {
   my ($this,$value)=@_;
@@ -123,6 +134,8 @@ sub writeArrayScript {
     { $moreSBATCH.="#SBATCH --nice=".$this->{niceValue}."\n" }
   if($this->{memValue}>0) 
     { $moreSBATCH.="#SBATCH --mem=".$this->{memValue}."\n" }
+  if($this->{threads}>0)
+    { $moreSBATCH.="#SBATCH --cpus-per-task=".$this->{threads}."\n" }
   if(length($moreSBATCH)>0) {
     unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" } }
   my $queue;
@@ -150,10 +163,11 @@ sub writeArrayScript {
   open(OUT,">$filename") || die $filename;
   print OUT "#!/bin/tcsh
 #
+#SBATCH --get-user-env
 #SBATCH -J $jobName
+#SBATCH -A $jobName
 #SBATCH -o $slurmDir/outputs/\%a.output
 #SBATCH -e $slurmDir/outputs/\%a.output
-#SBATCH -A $jobName
 #SBATCH --array=1-$numJobs\%$maxParallel
 $queue$moreSBATCH#
 $slurmDir/command\${SLURM_ARRAY_TASK_ID}.sh

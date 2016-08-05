@@ -17,8 +17,10 @@ use strict;
 # Methods:
 #   $node=new EssexNode($tag,$elem1,$elem2,...);
 #   $tag=$node->getTag();
+#   $node->changeTag($newTag);
 #   $n=$node->numElements();
 #   $elem=$node->getIthElem($i);
+#   $node->setIthElem($i,$dataOrNode);
 #   $elem=$node->findChild($tag);
 #   $array=$node->findChildren($tag);
 #   $array=$node->findDescendents($tag);# always returns an array
@@ -70,6 +72,13 @@ sub getTag
     return $self->{tag};
   }
 #---------------------------------------------------------------------
+#   $node->changeTag($newTag);
+sub changeTag
+  {
+    my ($self,$tag)=@_;
+    $self->{tag}=$tag;
+  }
+#---------------------------------------------------------------------
 #   $n=$node->numElements();
 sub numElements
   {
@@ -85,6 +94,13 @@ sub getIthElem
     my ($self,$i)=@_;
     my $elements=$self->{elements};
     return $elements->[$i];
+  }
+#---------------------------------------------------------------------
+#   $node->setIthElem($i,$dataOrNode);
+sub setIthElem
+  {
+    my ($self,$i,$child)=@_;
+    $self->{elements}->[$i]=$child;
   }
 #---------------------------------------------------------------------
 #   $array=$node->getElements();

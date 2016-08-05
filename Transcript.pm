@@ -658,6 +658,7 @@ sub toGff
     my $numUTR=$UTR ? @$UTR : 0;
     for(my $i=0 ; $i<$numUTR ; ++$i) {
       my $exon=$UTR->[$i];
+      $exon->{type}="UTR"; ### ?
       my $exonGff=$exon->toGff();
       $gff.=$exonGff;
     }

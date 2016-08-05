@@ -1,50 +1,50 @@
-package EssexFBI;
+package EssexICE;
 use strict;
 use EssexNode;
 use Transcript;
 
 ######################################################################
 #
-# EssexFBI.pm bmajoros@duke.edu 3/10/2016
+# EssexICE.pm bmajoros@duke.edu 3/10/2016
 #
-# Provides a more convenient programmatic interface to FBI reports
+# Provides a more convenient programmatic interface to ICE reports
 # encoded as Essex objects.
 #
 # Attributes:
 #   EssexNode *essex;
 #   float minPercentMatch : minimum % match for proteins to not cause LOF
 # Methods:
-#   $fbiReport=new EssexFBI($essexReportElem);
-#   $fbiReport->changeMinPercentMatch($x); # example: 75.3
-#   $substrate=$fbiReport->getSubstrate();
-#   $transcriptID=$fbiReport->getTranscriptID();
-#   $geneID=$fbiReport->getGeneID();
-#   $vcfWarnings=$fbiReport->getNumVcfWarnings();
-#   $vcfErrors=$fbiReport->getNumVcfErrors();
-#   $cigar=$fbiReport->getCigar();
-#   $transcript=$fbiReport->getRefTranscript();
-#   $transcript=$fbiReport->getMappedTranscript();
-#   $statusString=$fbiReport->getStatusString();
+#   $iceReport=new EssexICE($essexReportElem);
+#   $iceReport->changeMinPercentMatch($x); # example: 75.3
+#   $substrate=$iceReport->getSubstrate();
+#   $transcriptID=$iceReport->getTranscriptID();
+#   $geneID=$iceReport->getGeneID();
+#   $vcfWarnings=$iceReport->getNumVcfWarnings();
+#   $vcfErrors=$iceReport->getNumVcfErrors();
+#   $cigar=$iceReport->getCigar();
+#   $transcript=$iceReport->getRefTranscript();
+#   $transcript=$iceReport->getMappedTranscript();
+#   $statusString=$iceReport->getStatusString();
 #     status = mapped/splicing-changes/no-transcript/bad-annotation
-#   $bool=$fbiReport->hasBrokenSpliceSite();
+#   $bool=$iceReport->hasBrokenSpliceSite();
 #   $array=$report->getBrokenSpliceSites(); [pos,type=GT/AG]
-#   $array=$fbiReport->getAltTranscripts();
-#   $bool=$fbiReport->proteinDiffers();
-#   $percent=$fbiReport->getProteinMatch(); # example: 98.57 (whole number)
-#   $bool=$fbiReport->frameshift();
-#   $percent=$fbiReport->frameshiftPercentMismatch(); # example: 83 (whole num)
-#   $nucs=$fbiReport->frameshiftNucMismatch();
-#   $bool=$fbiReport->mappedPTC(); # premature stop codon when status="mapped"
-#   $bool=$fbiReport->mappedNMD(50); # only valid when status="mapped"
-#   $bool=$fbiReport->mappedNoStart(); # assumes status="mappped"
-#   $bool=$fbiReport->mappedNonstop(); # no stop codon; status must = "mapped"
-#   $bool=$fbiReport->refIsCoding();
-#   $bool=$fbiReport->mappedIsCoding();
-#   $bool=$fbiReport->lossOfCoding(); # ref is coding, alt is noncoding
-#   $bool=$fbiReport->allAltStructuresLOF(); # assumes status=splicing-changes,
+#   $array=$iceReport->getAltTranscripts();
+#   $bool=$iceReport->proteinDiffers();
+#   $percent=$iceReport->getProteinMatch(); # example: 98.57 (whole number)
+#   $bool=$iceReport->frameshift();
+#   $percent=$iceReport->frameshiftPercentMismatch(); # example: 83 (whole num)
+#   $nucs=$iceReport->frameshiftNucMismatch();
+#   $bool=$iceReport->mappedPTC(); # premature stop codon when status="mapped"
+#   $bool=$iceReport->mappedNMD(50); # only valid when status="mapped"
+#   $bool=$iceReport->mappedNoStart(); # assumes status="mappped"
+#   $bool=$iceReport->mappedNonstop(); # no stop codon; status must = "mapped"
+#   $bool=$iceReport->refIsCoding();
+#   $bool=$iceReport->mappedIsCoding();
+#   $bool=$iceReport->lossOfCoding(); # ref is coding, alt is noncoding
+#   $bool=$iceReport->allAltStructuresLOF(); # assumes status=splicing-changes,
 #          LOF (loss of function) means NMD or noncoding
-#   $bool=$fbiReport->allExonSkippingLOF(); # assumes status=splicing-changes
-#   $bool=$fbiReport->allExonSkippingNMD(); # assumes status=splicing-changes
+#   $bool=$iceReport->allExonSkippingLOF(); # assumes status=splicing-changes
+#   $bool=$iceReport->allExonSkippingNMD(); # assumes status=splicing-changes
 #
 # Private Methods:
 #
@@ -54,7 +54,7 @@ use Transcript;
 #---------------------------------------------------------------------
 #                           PUBLIC METHODS
 #---------------------------------------------------------------------
-#   $essexFBI=new EssexFBI($essexReportElem);
+#   $essexICE=new EssexICE($essexReportElem);
 sub new
 {
   my ($class,$report)=@_;
@@ -69,42 +69,42 @@ sub new
   return $self;
 }
 #---------------------------------------------------------------------
-#   $substrate=$fbiReport->getSubstrate();
+#   $substrate=$iceReport->getSubstrate();
 sub getSubstrate
 {
   my ($self)=@_;
   return $self->{essex}->getAttribute("substrate");
 }
 #---------------------------------------------------------------------
-#   $transcriptID=$fbiReport->getTranscriptID();
+#   $transcriptID=$iceReport->getTranscriptID();
 sub getTranscriptID
 {
   my ($self)=@_;
   return $self->{essex}->getAttribute("transcript-ID");
 }
 #---------------------------------------------------------------------
-#   $geneID=$fbiReport->getGeneID();
+#   $geneID=$iceReport->getGeneID();
 sub getGeneID
 {
   my ($self)=@_;
   return $self->{essex}->getAttribute("gene-ID");
 }
 #---------------------------------------------------------------------
-#   $vcfWarnings=$fbiReport->getNumVcfWarnings();
+#   $vcfWarnings=$iceReport->getNumVcfWarnings();
 sub getNumVcfWarnings
 {
   my ($self)=@_;
   return 0+$self->{essex}->getAttribute("vcf-warnings");
 }
 #---------------------------------------------------------------------
-#   $vcfErrors=$fbiReport->getNumVcfErrors();
+#   $vcfErrors=$iceReport->getNumVcfErrors();
 sub getNumVcfErrors
 {
   my ($self)=@_;
   return 0+$self->{essex}->getAttribute("vcf-errors");
 }
 #---------------------------------------------------------------------
-#   $cigar=$fbiReport->getCigar();
+#   $cigar=$iceReport->getCigar();
 sub getCigar
 {
   my ($self)=@_;
@@ -112,7 +112,7 @@ sub getCigar
   
 }
 #---------------------------------------------------------------------
-#   $defline=$fbiReport->getDefline();
+#   $defline=$iceReport->getDefline();
 sub getDefline
 {
   my ($self)=@_;
@@ -120,7 +120,7 @@ sub getDefline
   
 }
 #---------------------------------------------------------------------
-#   $transcript=$fbiReport->getRefTranscript();
+#   $transcript=$iceReport->getRefTranscript();
 sub getRefTranscript
 {
   my ($self)=@_;
@@ -129,7 +129,7 @@ sub getRefTranscript
   return new Transcript($trans);
 }
 #---------------------------------------------------------------------
-#   $array=$fbiReport->getAltTranscripts();
+#   $array=$iceReport->getAltTranscripts();
 sub getAltTranscripts
 {
   my ($self)=@_;
@@ -149,7 +149,7 @@ sub getAltTranscripts
   return $array;
 }
 #---------------------------------------------------------------------
-#   $transcript=$fbiReport->getMappedTranscript();
+#   $transcript=$iceReport->getMappedTranscript();
 sub getMappedTranscript
 {
   my ($self)=@_;
@@ -158,7 +158,7 @@ sub getMappedTranscript
   return $trans ? new Transcript($trans) : undef;
 }
 #---------------------------------------------------------------------
-#   $statusString=$fbiReport->getStatusString();
+#   $statusString=$iceReport->getStatusString();
 #             status=mapped/splicing-changes/no-transcript
 sub getStatusString
 {
@@ -170,7 +170,7 @@ sub getStatusString
   return $string;
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->hasBrokenSpliceSite();
+#   $bool=$iceReport->hasBrokenSpliceSite();
 sub hasBrokenSpliceSite
 {
   my ($self)=@_;
@@ -198,7 +198,7 @@ sub getBrokenSpliceSites
   return $array;
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->proteinDiffers();
+#   $bool=$iceReport->proteinDiffers();
 sub proteinDiffers
 {
   my ($self)=@_;
@@ -209,7 +209,7 @@ sub proteinDiffers
   if(defined($differs)) { return 1 } else { return 0 }
 }
 #---------------------------------------------------------------------
-#   $percent=$fbiReport->getProteinMatch();
+#   $percent=$iceReport->getProteinMatch();
 sub getProteinMatch
 {
   my ($self)=@_;
@@ -224,7 +224,7 @@ sub getProteinMatch
   return 0+$match->getIthElem(0);
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->frameshift();
+#   $bool=$iceReport->frameshift();
 sub frameshift
 {
   my ($self)=@_;
@@ -235,7 +235,7 @@ sub frameshift
   return $frameshift ? 1 : 0;
 }
 #---------------------------------------------------------------------
-#   $percent=$fbiReport->frameshiftPercentMismatch();
+#   $percent=$iceReport->frameshiftPercentMismatch();
 sub frameshiftPercentMismatch
 {
   my ($self)=@_;
@@ -255,7 +255,7 @@ sub frameshiftPercentMismatch
   return $num;
 }
 #---------------------------------------------------------------------
-#   $nucs=$fbiReport->frameshiftNucMismatch();
+#   $nucs=$iceReport->frameshiftNucMismatch();
 sub frameshiftNucMismatch
 {
   my ($self)=@_;
@@ -272,7 +272,7 @@ sub frameshiftNucMismatch
   return $0+$string;
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->mappedPTC(); # premature stop codon when status="mapped"
+#   $bool=$iceReport->mappedPTC(); # premature stop codon when status="mapped"
 sub mappedPTC
 {
   my ($self)=@_;
@@ -282,7 +282,7 @@ sub mappedPTC
   return $PTC ? 1 : 0;
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->mappedNMD($fifty); # only valid when status="mapped"
+#   $bool=$iceReport->mappedNMD($fifty); # only valid when status="mapped"
 sub mappedNMD
 {
   my ($self,$fifty)=@_;
@@ -295,7 +295,7 @@ sub mappedNMD
 	 $PTC->getAttribute("EJC-distance")>=$fifty);
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->mappedNoStart(); # assumes status="mappped"
+#   $bool=$iceReport->mappedNoStart(); # assumes status="mappped"
 sub mappedNoStart
 {
   my ($self)=@_;
@@ -304,7 +304,7 @@ sub mappedNoStart
   return $status->hasDescendentOrDatum("no-start-codon");
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->mappedNonstop(); # no stop codon; status must = "mapped"
+#   $bool=$iceReport->mappedNonstop(); # no stop codon; status must = "mapped"
 sub mappedNonstop
 {
   my ($self)=@_;
@@ -313,7 +313,7 @@ sub mappedNonstop
   return $status->hasDescendentOrDatum("nonstop-decay");
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->refIsCoding();
+#   $bool=$iceReport->refIsCoding();
 sub refIsCoding
 {
   my ($self)=@_;
@@ -322,7 +322,7 @@ sub refIsCoding
   return $ref->getAttribute("type") eq "protein-coding";
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->mappedIsCoding();
+#   $bool=$iceReport->mappedIsCoding();
 sub mappedIsCoding
 {
   my ($self)=@_;
@@ -331,14 +331,14 @@ sub mappedIsCoding
   return $mapped->getAttribute("type") eq "protein-coding";
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->lossOfCoding(); # ref is coding, alt is noncoding
+#   $bool=$iceReport->lossOfCoding(); # ref is coding, alt is noncoding
 sub lossOfCoding
 {
   my ($self)=@_;
   return $self->refIsCoding() && !$self->mappedIsCoding();
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->allAltStructuresLOF(); # assumes status=splicing-changes,
+#   $bool=$iceReport->allAltStructuresLOF(); # assumes status=splicing-changes,
 #          LOF (loss of function) means NMD or noncoding
 sub allAltStructuresLOF
 {
@@ -370,7 +370,7 @@ sub allAltStructuresLOF
   return 1;
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->allExonSkippingLOF(); # assumes status=splicing-changes,
+#   $bool=$iceReport->allExonSkippingLOF(); # assumes status=splicing-changes,
 sub allExonSkippingLOF
 {
   my ($self)=@_;
@@ -401,7 +401,7 @@ sub allExonSkippingLOF
   return 1;
 }
 #---------------------------------------------------------------------
-#   $bool=$fbiReport->allExonSkippingNMD(); # assumes status=splicing-changes,
+#   $bool=$iceReport->allExonSkippingNMD(); # assumes status=splicing-changes,
 sub allExonSkippingNMD
 {
   my ($self)=@_;
@@ -421,7 +421,7 @@ sub allExonSkippingNMD
   return 1;
 }
 #---------------------------------------------------------------------
-#   $fbiReport->changeMinPercentMatch($x); # example: 75.3
+#   $iceReport->changeMinPercentMatch($x); # example: 75.3
 sub changeMinPercentMatch
 {
   my ($self,$x)=@_;
