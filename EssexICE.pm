@@ -11,8 +11,9 @@ use Transcript;
 # encoded as Essex objects.
 #
 # Attributes:
+#   maxMismatches : used in allAltStructuresLOF()
+#   minPercentMatch : used in allAltStructuresLOF()
 #   EssexNode *essex;
-#   float minPercentMatch : minimum % match for proteins to not cause LOF
 # Methods:
 #   $iceReport=new EssexICE($essexReportElem);
 #   $iceReport->changeMinPercentMatch($x); # example: 75.3
@@ -362,8 +363,17 @@ sub allAltStructuresLOF
       my $match=$fate->findChild("percent-match");
       die "no percent-match in fate" unless $match;
       die "percent-match has no children" unless $match->numElements()>0;
-      my $percent=0+$match->getIthElem(0);
-      if($percent<$self->{minPercentMatch}) { $LOF=1 }
+      if(defined($self->{maxMismatches})) {
+	my $ratio=$match->getIthElem(1);
+	$ratio=~/(\d+)\/(\d+)/ || die $ratio;
+	my ($matches,$L)=($1,$2);
+	my $mismatches=$L-$matches;
+	if($mismatches>$self->{maxMismatches}) { $LOF=1 }
+      }
+      elsif(defined($self->{minPercentMatch})) {
+	my $percent=0+$match->getIthElem(0);
+	if($percent<$self->{minPercentMatch}) { $LOF=1 }
+      }
     }
     if(!$LOF) { return 0 }
   }

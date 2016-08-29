@@ -5,7 +5,7 @@ use strict;
 #
 # EssexNode.pm bmajoros@duke.edu 10/27/2008
 #
-# A node in a parse tree for a Essex file (Hierarchical Exchange Language).
+# A node in a parse tree for an Essex file (based on S-expressions).
 # These parse trees are produced by the EssexParser.  Literals (such as
 # numbers and strings---i.e., the actual data) are not allocated an
 # EssexNode; an EssexNode represents a parenthesized expression only.

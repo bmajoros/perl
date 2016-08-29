@@ -41,7 +41,13 @@ sub summaryStats
     my $varX=$n>1 ? ($sumXX-$sumX*$sumX/$n)/($n-1) : undef;
     if($varX<0) {$varX=0}
     my $stddevX=sqrt($varX);
-    return ($meanX,$stddevX,$minX,$maxX);
+    my @sorted=sort {$a <=> $b} @$array;
+    my $n=@sorted;
+    my $middle=$n/2;
+    my $median;
+    if($middle==int($middle)) { $median=$sorted[$middle] }
+    else { $median=($sorted[$middle]+$sorted[$middle+1])/2 }
+    return ($meanX,$stddevX,$minX,$maxX,$median);
   }
 #---------------------------------------------------------------------
 # $sum=SummaryStats::sum(\@array);
@@ -87,12 +93,13 @@ sub correlation
 sub roundedSummaryStats
   {
     my ($array)=@_;
-    my ($mean,$stddev,$min,$max)=SummaryStats::summaryStats($array);
+    my ($mean,$stddev,$min,$max,$median)=SummaryStats::summaryStats($array);
     $mean=int(100*$mean+5/9)/100;
     $stddev=int(100*$stddev+5/9)/100;
     $min=int(100*$min+5/9)/100;
     $max=int(100*$max+5/9)/100;
-    return ($mean,$stddev,$min,$max);
+    $median=int(100*$median+5/9)/100;
+    return ($mean,$stddev,$min,$max,$median);
   }
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
