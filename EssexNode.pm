@@ -47,12 +47,20 @@ my $EXONS=
 {
  "initial-exon"=>1, "internal-exon"=>1, "final-exon"=>1, "single-exon"=>1,
  "exon"=>1, "five-prime-UTR"=>1, "three-prime-UTR"=>1, "five_prime_UTR"=>1,
- "three_prime_UTR"=>1
+ "three_prime_UTR"=>1, "five-prime-UTR"=>1, "three-prime-UTR"=>1
 };
 
 my $SINGLETONS=
 {
- "bad-annotation"=>1, "bad-start"=>1, "no-stop-codon"=>1
+ "bad-annotation"=>1, "bad-start"=>1, "no-stop-codon"=>1, NMD=>1, mapped=>1,
+ noncoding=>1, "protein-differs"=>1, "too-many-vcf-errors"=>1,
+ "hypothetical-NMD"=>1
+};
+
+my $VARIANTS=
+{
+ "CDS-variants"=>1, "frameshift-variants"=>1, "UTR-variants"=>1,
+ "near-splice-variants"=>1, "splice-site-variants"=>1
 };
 
 #---------------------------------------------------------------------
@@ -435,14 +443,33 @@ sub printRecursiveXML
   my ($self,$depth,$file)=@_;
   my $tab='   'x$depth;
   my $tag=$self->{tag};
+  $tag=~s/_/-/g;
+  my $elements=$self->{elements};
+  my $n=$elements ? @$elements : 0;
+  if($n==0) { print $file "$tab<$tag/>"; return }
   if($EXONS->{$tag}) { $self->printExonXML($tag,$tab,$depth,$file); return }
   if($tag eq "bad-donor" || $tag eq "bad-acceptor") {
     my $nuc=$self->getIthElem(0); my $pos=$self->getIthElem(1);
-    print "$tab<$tag consensus=\"$nuc\" pos=\"$pos\"/>";
+    print $file "$tab<$tag consensus=\"$nuc\" pos=\"$pos\"/>";
+    return }
+  if($tag eq "new-start" || $tag eq "old-start") {
+    my $seq=$self->getIthElem(0);
+    my $score=$self->getIthElem(1);
+    my $threshold=$self->getIthElem(3);
+    print "$tab<$tag seq=\"$seq\" score=\"$score\" threshold=\"$threshold\"/>";
+    return }
+  if($tag eq "percent-match") {
+    my $percent=$self->getIthElem(0);
+    my $ratio=$self->getIthElem(1);
+    my $refLen=$self->getIthElem(2);
+    my $altLen=$self->getIthElem(3);
+    $refLen=~/ref-length=(\d+)/ || die; $refLen=$1;
+    $altLen=~/alt-length=(\d+)/ || die; $altLen=$1;
+    print $file "$tab<$tag percent=\"$percent\" ratio=\"$ratio\" ref-length=\"$refLen\" alt-length=\"$altLen\"/>";
     return }
   if($tag eq "ORF-length") {
     my $oldLen=$self->getIthElem(0); my $newLen=$self->getIthElem(2);
-    print "$tab<$tag old=\"$oldLen\" new=\"$newLen\"/>";
+    print $file "$tab<$tag old=\"$oldLen\" new=\"$newLen\"/>";
     return }
   if($tag eq "broken-acceptor" || $tag eq "broken-donor") {
     my $pos=$self->getIthElem(0);
@@ -451,18 +478,33 @@ sub printRecursiveXML
     my $newSeq=$self->getIthElem(3);
     my $newScore=$self->getIthElem(4);
     my $threshold=$self->getIthElem(6);
-    print $file "$tab<$tag pos=\"$pos\" ref_seq=\"$oldSeq\" ref_score=\"$oldScore\" alt_seq=\"$newSeq\" alt_score=\"$newScore\" threshold=\"$threshold\"/>";
+    print $file "$tab<$tag pos=\"$pos\" ref-seq=\"$oldSeq\" ref-score=\"$oldScore\" alt-seq=\"$newSeq\" alt-score=\"$newScore\" threshold=\"$threshold\"/>";
     return }
   if($tag eq "cryptic-site") {
-    my $pos=$self->getIthElem(0);
-    my $seq=$self->getIthElem(1);
-    my $score=$self->getIthElem(2);
-    my $threshold=$self->getIthElem(4);
-    print $file "$tab<$tag pos=\"$pos\" seq=\"$seq\" score=\"$score\" threshold=\"$threshold\"/>";
+    my $type=$self->getIthElem(0);
+    my $pos=$self->getIthElem(1);
+    my $seq=$self->getIthElem(2);
+    my $score=$self->getIthElem(3);
+    my $threshold=$self->getIthElem(5);
+    print $file "$tab<$tag type=\"$type\" pos=\"$pos\" seq=\"$seq\" score=\"$score\" threshold=\"$threshold\"/>";
     return }
-  my $elements=$self->{elements};
-  my $n=$elements ? @$elements : 0;
-  if($n==0) { print "$tab<$tag/>"; return }
+  if($VARIANTS->{$tag}) {
+    print $file "$tab<$tag>\n";
+    for(my $i=0 ; $i<$n ; ++$i) {
+      my $variant=$self->getIthElem($i);
+      my @fields=split/:/,$variant;
+      my ($id,$chr,$refPos,$altPos,$refSeq,$altSeq)=@fields;
+      print $file "$tab   <variant id=\"$id\" chr=\"$chr\" ref-pos=\"$refPos\" alt-pos=\"$altPos\" ref-seq=\"$refSeq\" alt-seq=\"$altSeq\"/>\n";
+    }
+    print $file "$tab</$tag>";
+    return }
+  if($tag eq "global-coords") {
+    my @fields=split/:/,$self->getIthElem(0);
+    my ($chr,$coords,$strand)=@fields;
+    $coords=~/(\d+)-(\d+)/ || die $coords;
+    my ($begin,$end)=($1,$2);
+    print $file "$tab<$tag chr=\"$chr\" begin=\"$begin\" end=\"$end\" strand=\"$strand\"/>";
+    return }
   print $file "$tab<$tag>";
   if($self->hasCompositeChildren()) {
     for(my $i=0 ; $i<$n ; ++$i) {
@@ -483,9 +525,12 @@ sub printRecursiveXML
   }
   else {
     for(my $i=0 ; $i<$n ; ++$i) {
-      if($i>0) { print $file " " }
+      
       my $elem=$elements->[$i];
-      print $file "$elem";
+      if($SINGLETONS->{$elem}) { print $file "<$elem/>" }
+      else {
+	if($i>0) { print $file " " }
+	print $file "$elem" }
     }
     print $file "</$tag>";
   }
