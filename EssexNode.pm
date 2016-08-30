@@ -34,6 +34,7 @@ use strict;
 #   $bool=EssexNode::isaNode($datum);
 #   $bool=$node->hasCompositeChildren();
 #   $node->print($filehandle);
+#   $node->printXML($filehandle);
 #   $node->recurse($visitor); # must have methods enter(node) and leave(node)
 #   $array=$node->pathQuery("report/reference-transcript/type");
 #   $array=$node->query($query); # e.g., "book/chapter/section/page>34"
@@ -42,6 +43,17 @@ use strict;
 #                                # i.e., probe/sequence~CCTAGCAGT
 ######################################################################
 
+my $EXONS=
+{
+ "initial-exon"=>1, "internal-exon"=>1, "final-exon"=>1, "single-exon"=>1,
+ "exon"=>1, "five-prime-UTR"=>1, "three-prime-UTR"=>1, "five_prime_UTR"=>1,
+ "three_prime_UTR"=>1
+};
+
+my $SINGLETONS=
+{
+ "bad-annotation"=>1, "bad-start"=>1, "no-stop-codon"=>1
+};
 
 #---------------------------------------------------------------------
 #                           PUBLIC METHODS
@@ -171,6 +183,13 @@ sub print
     $self->printRecursive(0,$file);
   }
 #---------------------------------------------------------------------
+#   $node->printXML($filehandle);
+sub printXML
+  {
+    my ($self,$file)=@_;
+    $self->printRecursiveXML(0,$file);
+  }
+#---------------------------------------------------------------------
 #   $bool=$node->hasDescendent($tag);
 sub hasDescendent
 {
@@ -281,7 +300,8 @@ sub recurse
   my $n=@$elements;
   for(my $i=0 ; $i<$n ; ++$i) {
     my $elem=$elements->[$i];
-    $elem->recurse($visitor);
+    if(EssexNode::isaNode($elem)) { $elem->recurse($visitor) }
+    else { $visitor->enter($elem); $visitor->leave($elem) }
   }
   $visitor->leave($self);
 }
@@ -397,6 +417,78 @@ sub printRecursive
     }
   }
   print $file ")";
+}
+#---------------------------------------------------------------------
+sub printExonXML
+{
+  my ($self,$tag,$tab,$depth,$file)=@_;
+  my $begin=$self->getIthElem(0);
+  my $end=$self->getIthElem(1);
+  my $score=$self->getIthElem(2);
+  my $strand=$self->getIthElem(3);
+  my $frame=$self->getIthElem(4);
+  print "$tab<$tag begin=\"$begin\" end=\"$end\" score=\"$score\" strand=\"$strand\" frame=\"$frame\"/>";
+}
+#---------------------------------------------------------------------
+sub printRecursiveXML
+{
+  my ($self,$depth,$file)=@_;
+  my $tab='   'x$depth;
+  my $tag=$self->{tag};
+  if($EXONS->{$tag}) { $self->printExonXML($tag,$tab,$depth,$file); return }
+  if($tag eq "bad-donor" || $tag eq "bad-acceptor") {
+    my $nuc=$self->getIthElem(0); my $pos=$self->getIthElem(1);
+    print "$tab<$tag consensus=\"$nuc\" pos=\"$pos\"/>";
+    return }
+  if($tag eq "ORF-length") {
+    my $oldLen=$self->getIthElem(0); my $newLen=$self->getIthElem(2);
+    print "$tab<$tag old=\"$oldLen\" new=\"$newLen\"/>";
+    return }
+  if($tag eq "broken-acceptor" || $tag eq "broken-donor") {
+    my $pos=$self->getIthElem(0);
+    my $oldSeq=$self->getIthElem(1);
+    my $oldScore=$self->getIthElem(2);
+    my $newSeq=$self->getIthElem(3);
+    my $newScore=$self->getIthElem(4);
+    my $threshold=$self->getIthElem(6);
+    print $file "$tab<$tag pos=\"$pos\" ref_seq=\"$oldSeq\" ref_score=\"$oldScore\" alt_seq=\"$newSeq\" alt_score=\"$newScore\" threshold=\"$threshold\"/>";
+    return }
+  if($tag eq "cryptic-site") {
+    my $pos=$self->getIthElem(0);
+    my $seq=$self->getIthElem(1);
+    my $score=$self->getIthElem(2);
+    my $threshold=$self->getIthElem(4);
+    print $file "$tab<$tag pos=\"$pos\" seq=\"$seq\" score=\"$score\" threshold=\"$threshold\"/>";
+    return }
+  my $elements=$self->{elements};
+  my $n=$elements ? @$elements : 0;
+  if($n==0) { print "$tab<$tag/>"; return }
+  print $file "$tab<$tag>";
+  if($self->hasCompositeChildren()) {
+    for(my $i=0 ; $i<$n ; ++$i) {
+      my $child=$elements->[$i];
+      if(EssexNode::isaNode($child)) {
+	print $file "\n";
+	$child->printRecursiveXML($depth+1,$file);
+      }
+      else {
+	my $tab='   'x($depth+1);
+	#if($child eq "bad-annotation" || $child eq "bad-start")
+	if($SINGLETONS->{$child})
+	  { print $file "\n$tab<$child/>" }
+	else { print $file "\n$tab$child" }
+      }
+    }
+    print $file "\n$tab</$tag>";
+  }
+  else {
+    for(my $i=0 ; $i<$n ; ++$i) {
+      if($i>0) { print $file " " }
+      my $elem=$elements->[$i];
+      print $file "$elem";
+    }
+    print $file "</$tag>";
+  }
 }
 #---------------------------------------------------------------------
 #---------------------------------------------------------------------
