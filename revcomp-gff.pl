@@ -1,5 +1,4 @@
-#!/usr/bin/perl
-#use lib('/home/bmajoros/perlib','/home/bmajoros/genomics/perl');
+#!/bin/env perl
 use GffReader;
 $|=1;
 

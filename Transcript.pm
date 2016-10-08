@@ -217,10 +217,9 @@ sub reverseComplement
     $self->{end}=$seqLen-$begin;
     $self->{strand}=compStrand($self->{strand});
     my $exons=$self->{exons};
-    foreach my $exon (@$exons)
-      {
-	$exon->reverseComplement($seqLen);
-      }
+    foreach my $exon (@$exons) { $exon->reverseComplement($seqLen) }
+    my $exons=$self->{UTR};
+    foreach my $exon (@$exons) { $exon->reverseComplement($seqLen) }
   }
 #---------------------------------------------------------------------
 #   $bool=$transcript->exonOverlapsExon($exon);
@@ -1001,10 +1000,11 @@ sub mapToGenome
 sub mapToTranscript
   {
     my ($self,$genomicCoord)=@_;
-    my $numExons=$self->numExons();
+    my $exons=$self->getRawExons();
+    my $numExons=@$exons;
     my $transcriptCoord=0;
     for(my $i=0 ; $i<$numExons ; ++$i) {
-      my $exon=$self->getIthExon($i);
+      my $exon=$exons->[$i];
       if($exon->containsCoordinate($genomicCoord)) {
 	return $self->getStrand() eq "+" ?
 	  $transcriptCoord+$genomicCoord-$exon->getBegin() :

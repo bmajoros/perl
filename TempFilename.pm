@@ -12,6 +12,7 @@ use strict;
 #
 # Methods:
 #   $filename=TempFilename::generate();
+#   $filename=TempFilename::generate($suffix);
 #
 #   
 ######################################################################
@@ -22,10 +23,12 @@ use strict;
 #---------------------------------------------------------------------
 sub generate
 {
+  my ($suffix)=@_;
+  if(length($suffix)<1) { $suffix="tmp" }
   while(1)
     {
       my $n=int(rand(1000000)+100000);
-      my $filename="$n.tmp";
+      my $filename="$n.$suffix";
       return($filename) unless -e $filename;
     }
 }
