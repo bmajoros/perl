@@ -208,7 +208,7 @@ sub hasDescendent
       if(EssexNode::isaNode($child)) {
 	if($child->{tag} eq $tag || $child->hasDescendent($tag)) { return 1 }
       }
-      if($child eq $tag) { return 1 }
+      elsif($child eq $tag) { return 1 }
     }
   }
   return 0;
@@ -435,7 +435,7 @@ sub printExonXML
   my $score=$self->getIthElem(2);
   my $strand=$self->getIthElem(3);
   my $frame=$self->getIthElem(4);
-  print "$tab<$tag begin=\"$begin\" end=\"$end\" score=\"$score\" strand=\"$strand\" frame=\"$frame\"/>";
+  print $file "$tab<$tag begin=\"$begin\" end=\"$end\" score=\"$score\" strand=\"$strand\" frame=\"$frame\"/>";
 }
 #---------------------------------------------------------------------
 sub printRecursiveXML
@@ -456,7 +456,7 @@ sub printRecursiveXML
     my $seq=$self->getIthElem(0);
     my $score=$self->getIthElem(1);
     my $threshold=$self->getIthElem(3);
-    print "$tab<$tag seq=\"$seq\" score=\"$score\" threshold=\"$threshold\"/>";
+    print $file "$tab<$tag seq=\"$seq\" score=\"$score\" threshold=\"$threshold\"/>";
     return }
   if($tag eq "percent-match") {
     my $percent=$self->getIthElem(0);
