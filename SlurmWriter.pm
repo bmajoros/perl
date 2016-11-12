@@ -80,7 +80,7 @@ sub writeScripts {
     my $id=$i+1;
     my $filename="$scriptDir/$id.slurm";
     open(OUT,">$filename") || die $filename;
-    print OUT "#!/bin/tcsh
+    print OUT "#!/bin/sh
 #
 #SBATCH --get-user-env
 #SBATCH -J $filestem$id
@@ -143,25 +143,26 @@ sub writeArrayScript {
     $queue=$this->{queue};
     $queue="#SBATCH -p $queue\n"; }
   if(-e $slurmDir)
-    { system("rm -f $slurmDir/*.slurm $slurmDir/outputs/*.output") }
+    { system("rm -f $slurmDir/*.sh $slurmDir/array.slurm $slurmDir/outputs/*.output") }
   system("mkdir -p $slurmDir/outputs");
   my $commands=$this->{commands};
   my $numCommands=@$commands;
   my $numJobs=$numCommands;
-  my $TCSH=`which tcsh`; chomp $TCSH;
+  my $TCSH=`which sh`; chomp $TCSH;
   for(my $i=0 ; $i<$numCommands ; ++$i) {
     my $command=$commands->[$i];
     my $index=$i+1;
     my $filename="$slurmDir/command$index.sh";
     open(OUT,">$filename") || die $filename;
-    print OUT "#!$TCSH\n";
+    #print OUT "#!$TCSH\n";
+    print OUT "#/bin/bash\n";
     print OUT "$command\n";
     close(OUT);
     system("chmod +x $filename");
   }
   my $filename="$slurmDir/array.slurm";
   open(OUT,">$filename") || die $filename;
-  print OUT "#!/bin/tcsh
+  print OUT "#!/bin/sh
 #
 #SBATCH --get-user-env
 #SBATCH -J $jobName
