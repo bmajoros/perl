@@ -29,7 +29,7 @@ sub sample {
     $codons+=1;
     $pos+=3;
   }
-  return $codons;
+  return $codons*3;
 }
 
 #============================ main() ==============================
