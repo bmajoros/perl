@@ -110,6 +110,7 @@ sub loadGFF
 		$transcript->{source}=$fields[1];
 		$transcript->setBegin($begin);
 		$transcript->setEnd($end);
+		if($fields[5] ne ".") {$transcript->{score}=$fields[5]}
 	      }
 	      my $geneId;
 	      if(/genegrp=(\S+)/) {$geneId=$1}

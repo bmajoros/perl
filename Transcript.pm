@@ -132,11 +132,14 @@ sub new
        end=>$essex->getAttribute("end"),
        geneId=>$essex->getAttribute("gene"),
        substrate=>$essex->getAttribute("substrate"),
+       score=>$essex->getAttribute("score"),
        exons=>[],
        UTR=>[],
        stopCodons=>{TAG=>1,TGA=>1,TAA=>1},
       };
     bless $self,$class;
+    my $change=$essex->getAttribute("structure-change");
+    if(defined($change)) { $self->{structureChange}=$change }
     my $exons=$self->{exons}; my $UTR=$self->{UTR};
     my $exonsElem=$essex->findChild("exons");
     if($exonsElem) {
@@ -644,9 +647,13 @@ sub toGff
       my $substrate=$self->{substrate};
       my $source=$self->{source};
       my $strand=$self->{strand};
+      my $score=$self->{score};
+      if(!defined($score)) {$score="."}
       my $extra;
-      if($extraFields=~/\S/) {$extra="; $extraFields"}
-      $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t.\t$strand\t.\ttranscript_id \"$transID\"; gene_id \"$geneID\"$extra\n";
+      if($extraFields=~/\S/) {$extra=";$extraFields"}
+      my $change=$self->{structureChange};
+      if(defined($change)) { $extra.="; structure-change \"$change\"" }
+      $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t$score\t$strand\t.\ttranscript_id \"$transID\"; gene_id \"$geneID\"$extra\n";
     }
     for(my $i=0 ; $i<$numExons ; ++$i) {
       my $exon=$exons->[$i];
