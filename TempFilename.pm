@@ -1,5 +1,6 @@
 package TempFilename;
 use strict;
+use File::Temp qw/ tempfile /;
 
 ######################################################################
 #
@@ -12,7 +13,7 @@ use strict;
 #
 # Methods:
 #   $filename=TempFilename::generate();
-#   $filename=TempFilename::generate($suffix);
+#   $filename=TempFilename::generate($prefix);
 #
 #   
 ######################################################################
@@ -23,14 +24,10 @@ use strict;
 #---------------------------------------------------------------------
 sub generate
 {
-  my ($suffix)=@_;
-  if(length($suffix)<1) { $suffix="tmp" }
-  while(1)
-    {
-      my $n=int(rand(1000000)+100000);
-      my $filename="$n.$suffix";
-      return($filename) unless -e $filename;
-    }
+  my ($prefix)=@_;
+  if(length($prefix)<1) { $prefix="tmp" }
+  my ($fh,$filename)=tempfile($prefix."XXXXXX");
+  return $filename;
 }
 #---------------------------------------------------------------------
 

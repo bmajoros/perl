@@ -155,7 +155,7 @@ sub writeArrayScript {
     my $filename="$slurmDir/command$index.sh";
     open(OUT,">$filename") || die $filename;
     #print OUT "#!$TCSH\n";
-    print OUT "#/bin/bash\n";
+    print OUT "#!/bin/bash\n";
     print OUT "$command\n";
     close(OUT);
     system("chmod +x $filename");
