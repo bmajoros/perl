@@ -138,8 +138,19 @@ sub new
        stopCodons=>{TAG=>1,TGA=>1,TAA=>1},
       };
     bless $self,$class;
-    my $change=$essex->getAttribute("structure-change");
-    if(defined($change)) { $self->{structureChange}=$change }
+    #my $change=$essex->getAttribute("structure-change");
+    #if(defined($change)) { $self->{structureChange}=$change }
+    my $changeNode=$essex->findChild("structure-change");
+    if($changeNode) {
+      my $changeString="";
+      my $numElem=$changeNode->numElements();
+      for(my $i=0 ; $i<$numElem ; ++$i) {
+	my $elem=$changeNode->getIthElem($i);
+	next if EssexNode::isaNode($elem);
+	if($changeString ne "") { $changeString.=" " }
+	$changeString.=$elem; }
+      if(length($changeString)>0) { $self->{structureChange}=$changeString }
+    }
     my $exons=$self->{exons}; my $UTR=$self->{UTR};
     my $exonsElem=$essex->findChild("exons");
     if($exonsElem) {
@@ -652,7 +663,7 @@ sub toGff
       my $extra;
       if($extraFields=~/\S/) {$extra=";$extraFields"}
       my $change=$self->{structureChange};
-      if(defined($change)) { $extra.="; structure-change \"$change\"" }
+      if(defined($change)) { $extra.="; structure_change \"$change\"" }
       $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t$score\t$strand\t.\ttranscript_id \"$transID\"; gene_id \"$geneID\"$extra\n";
     }
     for(my $i=0 ; $i<$numExons ; ++$i) {

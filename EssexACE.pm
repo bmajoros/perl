@@ -142,8 +142,8 @@ sub getAltTranscripts
     for(my $i=0 ; $i<$n ; ++$i) {
       my $child=$children->[$i];
       my $transcript=new Transcript($child);
-      my $change=$child->getAttribute("structure-change");
-      $transcript->{structureChange}=$change;
+      #my $change=$child->getAttribute("structure-change");
+      #$transcript->{structureChange}=$change;
       push @$array,$transcript;
     }
   }

@@ -25,7 +25,7 @@ use File::Temp qw/ tempfile /;
 sub generate
 {
   my ($prefix)=@_;
-  if(length($prefix)<1) { $prefix="tmp" }
+  if(length($prefix)<1) { $prefix="tmp." }
   my ($fh,$filename)=tempfile($prefix."XXXXXX");
   return $filename;
 }
