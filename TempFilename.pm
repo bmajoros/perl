@@ -26,7 +26,7 @@ sub generate
 {
   my ($prefix)=@_;
   if(length($prefix)<1) { $prefix="tmp." }
-  my ($fh,$filename)=tempfile($prefix."XXXXXX");
+  my ($fh,$filename)=tempfile($prefix."XXXXXX", DIR=>$ENV{"TMPDIR"});
   return $filename;
 }
 #---------------------------------------------------------------------

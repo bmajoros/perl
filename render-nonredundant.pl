@@ -18,6 +18,7 @@ my %allQueryIds;
 my $parser=new BlastParser;
 my $hits=$parser->parse($blastFile,$maxExpect);
 my $nHits=@$hits;
+print "$nHits hits\n";
 my %signatures;
 print STDERR "$nHits hits with E<=$maxExpect\n";
 for(my $i=0 ; $i<$nHits ; ++$i)

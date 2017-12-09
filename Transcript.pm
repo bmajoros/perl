@@ -151,6 +151,12 @@ sub new
 	$changeString.=$elem; }
       if(length($changeString)>0) { $self->{structureChange}=$changeString }
     }
+    my $fateNode=$essex->findChild("fate");
+    if($fateNode) {
+      my $child=$fateNode->getIthElem(0);
+      if(defined($child) && !EssexNode::isaNode($child))
+	{ $self->{fate}=$child }
+    }
     my $exons=$self->{exons}; my $UTR=$self->{UTR};
     my $exonsElem=$essex->findChild("exons");
     if($exonsElem) {
@@ -643,11 +649,16 @@ sub toGff
     my $geneID=$self->{geneId};
 
     my $keyValuePairs=$self->parseExtraFields();
+    my $change=$self->{structureChange};
+    if(defined($change)) { push @$keyValuePairs,["structure_change",$change] }
+    my $fate=$self->{fate};
+    if(defined($fate)) { push @$keyValuePairs,["fate",$fate] }
     my $extraFields="";
     foreach my $pair (@$keyValuePairs) {
       my ($key,$value)=@$pair;
       next if $key eq "gene_id" || $key eq "transcript_id";
-      $extraFields.="$key=$value;";
+      $extraFields.="; $key \"$value\"";
+      #if($extraFields=~/(.)(.)\s*broken/) { $a=chr($1);$b=chr($2); print "$1=$a $2=$b\t$extraFields\n" }
     }
     my $exons=$self->{exons};
     my $numExons=$exons ? @$exons : 0;
@@ -661,9 +672,7 @@ sub toGff
       my $score=$self->{score};
       if(!defined($score)) {$score="."}
       my $extra;
-      if($extraFields=~/\S/) {$extra=";$extraFields"}
-      my $change=$self->{structureChange};
-      if(defined($change)) { $extra.="; structure_change \"$change\"" }
+      if($extraFields=~/\S/) {$extra="$extraFields"}
       $gff.="$substrate\t$source\ttranscript\t$begin\t$end\t$score\t$strand\t.\ttranscript_id \"$transID\"; gene_id \"$geneID\"$extra\n";
     }
     for(my $i=0 ; $i<$numExons ; ++$i) {

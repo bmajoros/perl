@@ -113,7 +113,8 @@ sub getIthElem
   {
     my ($self,$i)=@_;
     my $elements=$self->{elements};
-    return $elements->[$i];
+    if(@$elements>0) { return $elements->[$i] }
+    return undef
   }
 #---------------------------------------------------------------------
 #   $node->setIthElem($i,$dataOrNode);

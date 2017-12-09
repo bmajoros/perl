@@ -142,8 +142,15 @@ sub getAltTranscripts
     for(my $i=0 ; $i<$n ; ++$i) {
       my $child=$children->[$i];
       my $transcript=new Transcript($child);
-      #my $change=$child->getAttribute("structure-change");
-      #$transcript->{structureChange}=$change;
+#      my $change=$child->getAttribute("structure-change");
+#      if(!defined($change)) { $change="" }
+#      $transcript->{structureChange}=$change;
+#      my $fateNode=$child->findChild("fate");
+#      if($fateNode) {
+#	my $fateString=$fateNode->getIthElem(0);
+#	if(!defined($fateString)) { $fateString="" }
+#	$transcript->{fate}=$fateString;
+#      }
       push @$array,$transcript;
     }
   }

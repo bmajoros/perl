@@ -130,14 +130,15 @@ sub writeArrayScript {
   my ($this,$slurmDir,$jobName,$runDir,$maxParallel,$moreSBATCH)=@_;
   die "specify maxParallel parameter" unless $maxParallel>0;
   chomp $moreSBATCH;
+  if(length($moreSBATCH)>0) { $moreSBATCH="$moreSBATCH\n" }
   if($this->{niceValue}>0) 
     { $moreSBATCH.="#SBATCH --nice=".$this->{niceValue}."\n" }
   if($this->{memValue}>0) 
     { $moreSBATCH.="#SBATCH --mem=".$this->{memValue}."\n" }
   if($this->{threads}>0)
     { $moreSBATCH.="#SBATCH --cpus-per-task=".$this->{threads}."\n" }
-  if(length($moreSBATCH)>0) {
-    unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" } }
+  #if(length($moreSBATCH)>0) {
+  #  unless($moreSBATCH=~/\n$/) { $moreSBATCH.="\n" } }
   my $queue;
   if(length($this->{queue})>0) {
     $queue=$this->{queue};
